@@ -31,6 +31,10 @@ kotlin {
             // Rutas tipadas: cada destino es una clase @Serializable (ADR-0052).
             implementation(libs.navigation.compose)
             implementation(libs.kotlinx.serialization.json)
+            // Cliente HTTP (ADR-0052). El motor (OkHttp) lo pone androidApp (ADR-0075).
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
         }
     }
 }

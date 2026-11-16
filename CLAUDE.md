@@ -7,7 +7,7 @@ Guía para agentes de IA que trabajan en este repositorio. Es corta a propósito
 La app Android del sistema de turnos, con Kotlin Multiplatform y Compose Multiplatform. Es la interfaz del usuario final: registro e inicio de sesión, búsqueda de profesionales, disponibilidad, reserva con el paso del teléfono, y consulta y cancelación de las reservas propias (ENUNCIADO §3.2, §5).
 
 - **Habla con los dos backends, nunca con la cátedra** (ADR-0001). Con turnos: registro, login, disponibilidad y reservas. Con el catálogo: categorías, búsqueda, agenda y estado de sincronización. El mismo JWT de usuario sirve para los dos: lo emite turnos y el catálogo lo valida (ADR-0003, ADR-0032).
-- **Solo Android** (ADR-0072), pero el código va en `commonMain`; `androidMain` tiene solo lo que la plataforma exige.
+- **Solo Android** (ADR-0072), en dos módulos (ADR-0074): `composeApp` tiene todo el código común (`commonMain` y `commonTest`, sin `androidMain`), y `androidApp` es la app Android, con solo lo que la plataforma exige.
 - **Las pruebas de la app son opcionales** (ENUNCIADO §10.1). Hay pocas, sobre lógica pura (ADR-0047).
 
 ## Antes de escribir código
@@ -27,7 +27,7 @@ La app Android del sistema de turnos, con Kotlin Multiplatform y Compose Multipl
 | Criterios de aceptación de cada pantalla | `requisitos/HU.md` (HU-01, 02, 04 a 10) |
 | Identidades, JWT, roles | `arq/seguridad.md`; ADR-0033 (vigencia y `rememberMe`), ADR-0049 (JWT cifrado) |
 | Pruebas de la app | `arq/pruebas.md` (sección App KMP), ADR-0047 |
-| Stack y arquitectura | ADR-0048, ADR-0051, ADR-0052, ADR-0072 |
+| Stack y arquitectura | ADR-0048, ADR-0051, ADR-0052, ADR-0072, ADR-0074 |
 | Seguimiento de la reserva por polling | ADR-0021 |
 | Validación del teléfono | ADR-0027 |
 | Prototipos de las pantallas | ADR-0050 |
@@ -37,20 +37,20 @@ La app Android del sistema de turnos, con Kotlin Multiplatform y Compose Multipl
 
 ## Comandos
 
-Se confirman al crear el proyecto (issue #1) y se corrigen acá si cambian.
+Confirmados al crear el proyecto (issue #1). Se corrigen acá si cambian.
 
 | Para | Comando |
 | --- | --- |
-| Compilar la app | `./gradlew :composeApp:assembleDebug` |
-| Correr las pruebas | `./gradlew :composeApp:testDebugUnitTest` |
+| Compilar la app | `./gradlew :androidApp:assembleDebug` |
+| Correr las pruebas del código común | `./gradlew :composeApp:testAndroidHostTest` |
 | Compilar y probar todo | `./gradlew build` |
 
-Para ejecutarla, Android Studio con un emulador. Desde el emulador, los backends que corren en la máquina están en `10.0.2.2`, no en `localhost`.
+Las versiones de Kotlin, AGP, Compose y las librerías están en `gradle/libs.versions.toml`. Para ejecutarla, Android Studio con un emulador. Desde el emulador, los backends que corren en la máquina están en `10.0.2.2`, no en `localhost`.
 
 ## Lo propio de esta app
 
 - **Las dependencias se arman a mano** en un `AppContainer` (ADR-0052). No se agrega una librería de inyección.
-- **Lo que depende de Android** (guardar el JWT cifrado, la confianza en el certificado) es una interfaz en `commonMain` con su implementación en `androidMain`. Sin `expect`/`actual` (ADR-0072).
+- **Lo que depende de Android** (guardar el JWT cifrado, la confianza en el certificado) es una interfaz en `commonMain` con su implementación en el módulo `androidApp`. Sin `expect`/`actual` (ADR-0072).
 - **Las URL de los dos servicios** salen de la configuración del build, nunca del código de una feature.
 - **Los backends levantados con Compose hablan solo HTTPS** (ADR-0073), con un certificado autofirmado (`tls.crt`) que genera un script de `turnos-service` en `secrets/`. Por eso la confianza en ese certificado va en el esqueleto (issue #24): sin ella ninguna pantalla se puede probar contra los backends. `tls.crt` no se commitea en este repo, porque se regenera en cada máquina; cómo lo toma la app se decide en la #24.
 - **Los errores se deciden por `status` y `code`**, nunca por el texto de `detail`, y se traducen una sola vez. La tabla de qué hace la app ante cada respuesta está en `arq/interfaz.md`.
@@ -60,13 +60,14 @@ Para ejecutarla, Android Studio con un emulador. Desde el emulador, los backends
 
 ## Flujo de trabajo con Git
 
-Igual que en los backends; el detalle está en `docs/guia-git.md`:
+**Ramas acumuladas** (detalle en `docs/guia-git.md`, sección "Ramas acumuladas"). Se trabaja una milestone entera sin esperar merges:
 
-- **El agente** crea la rama de la issue solo en local, desde `develop` actualizada (`git checkout -b <tipo>/<N>-<descripcion>`), escribe los archivos y corre `./gradlew build`. No escribe nada en GitHub.
-- **El alumno** revisa, commitea, pushea, abre el pull request a `develop` y mergea.
-- Al terminar, el agente entrega un bloque de comandos listo para pegar (`git add` por commit, `git commit -m`, `git push`, `gh pr create --base develop`, `gh pr merge --merge --delete-branch`). Mensajes en español, con Conventional Commits, sin atribuciones a herramientas. Cada comando en una sola línea, sin `\`.
-- Antes de crear la rama de la issue siguiente, verificar con `git fetch` que el pull request anterior está en `origin/develop`.
-- Al cerrar la última issue de una milestone se crea `milestone/<n>-<nombre>` y el pull request a `main` sale de ahí. Nunca de `develop`.
+1. **Al empezar la milestone**, se leen sus issues (`gh issue list --milestone "<nombre>"`) y los `docs`, y se le plantean al alumno **todas** las decisiones abiertas juntas, con una recomendación y su porqué. No se escribe código hasta tener las respuestas.
+2. **La primera rama** sale de `develop` actualizada (`git fetch` y fast-forward). **Cada rama siguiente sale de la anterior**: `git checkout -b <tipo>/<N>-<descripcion>` parado en la rama de la issue previa.
+3. **Al cerrar cada issue**, se corre `./gradlew build` y **el agente commitea en local**, con la identidad de Git del alumno, Conventional Commits en español, un cambio lógico por commit y **sin atribuciones a herramientas** (ni `Co-Authored-By` ni menciones a Claude). Nunca pushea ni escribe en GitHub (ni issues, ni PR, ni ramas remotas).
+4. **Los cambios en `docs`** (ADR, trazabilidad) se escriben pero no se commitean.
+5. **Al terminar la milestone**, se entrega un solo bloque para pegar, cada comando en una línea y sin `\`: el commit de `docs`; después, por cada rama y en orden, `git push -u origin <rama>`, `gh pr create --base develop` (PR corto que termina en "Cierra la Issue #N"), `gh pr merge --merge --delete-branch` y `gh issue close N`; al final, la rama `milestone/<n>-<nombre>` y su PR a `main` (nunca desde `develop`).
+6. Al entregar, se explica qué hace cada pieza y por qué está en esa capa, issue por issue.
 
 ## Convenciones del código
 

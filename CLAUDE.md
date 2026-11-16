@@ -31,7 +31,7 @@ La app Android del sistema de turnos, con Kotlin Multiplatform y Compose Multipl
 | Seguimiento de la reserva por polling | ADR-0021 |
 | Validación del teléfono | ADR-0027 |
 | Prototipos de las pantallas | ADR-0050 |
-| HTTPS y certificado local | ADR-0035, ADR-0073 |
+| HTTPS, certificado local, URL y timeouts | ADR-0035, ADR-0073, ADR-0075; RNF-09 |
 | Qué milestone sigue | `trazabilidad.md` (filas de `app-kmp`) |
 | Flujo de Git | `guia-git.md` |
 
@@ -49,11 +49,11 @@ Las versiones de Kotlin, AGP, Compose y las librerías están en `gradle/libs.ve
 
 ## Lo propio de esta app
 
-- **Las dependencias se arman a mano** en un `AppContainer` (ADR-0052). No se agrega una librería de inyección.
+- **Las dependencias se arman a mano** en un `AppContainer` (ADR-0052), que crea `TurnosApplication` (en `androidApp`) una sola vez, con el motor HTTP (OkHttp) y las URL del build. No se agrega una librería de inyección.
 - **Lo que depende de Android** (guardar el JWT cifrado, la confianza en el certificado) es una interfaz en `commonMain` con su implementación en el módulo `androidApp`. Sin `expect`/`actual` (ADR-0072).
-- **Las URL de los dos servicios** salen de la configuración del build, nunca del código de una feature.
-- **Los backends levantados con Compose hablan solo HTTPS** (ADR-0073), con un certificado autofirmado (`tls.crt`) que genera un script de `turnos-service` en `secrets/`. Por eso la confianza en ese certificado va en el esqueleto (issue #24): sin ella ninguna pantalla se puede probar contra los backends. `tls.crt` no se commitea en este repo, porque se regenera en cada máquina; cómo lo toma la app se decide en la #24.
-- **Los errores se deciden por `status` y `code`**, nunca por el texto de `detail`, y se traducen una sola vez. La tabla de qué hace la app ante cada respuesta está en `arq/interfaz.md`.
+- **Las URL de los dos servicios** son campos de `BuildConfig` que salen de `local.properties` (`turnos.url`, `catalogo.url`), con los valores del emulador por defecto (ADR-0075). Las APIs las reciben como `ServiceUrls`, nunca escritas en el código de una feature.
+- **Los backends levantados con Compose hablan solo HTTPS** (ADR-0073), con un certificado autofirmado (`tls.crt`) que genera un script de `turnos-service` en `secrets/`. Por eso la confianza en ese certificado va en el esqueleto (issue #24): sin ella ninguna pantalla se puede probar contra los backends. `tls.crt` no se commitea: la tarea `copyTlsCertificate` de `androidApp` lo copia al compilar desde `../turnos-service/secrets/tls.crt` (o `tls.cert` en `local.properties`), y `network_security_config.xml` lo acepta como única autoridad para `10.0.2.2` y `localhost` (ADR-0075). Sin el certificado, el build falla a propósito; el CI genera uno descartable.
+- **Los errores se deciden por `status` y `code`**, nunca por el texto de `detail`, y se traducen una sola vez: los repositorios envuelven cada llamada con `runCatchingApi` (`core/network`), que devuelve `Result` con un `AppError`. Los mensajes para el usuario están en `core/error/ErrorMessages.kt`. La tabla de qué hace la app ante cada respuesta está en `arq/interfaz.md`.
 - **Un 401 de cualquier servicio** borra el JWT y vuelve a Login, en un solo lugar.
 - **La autoridad es siempre el backend.** La app valida solo para mejorar la experiencia (campos obligatorios, formato del teléfono). Mostrar u ocultar la sección de administración según el rol es solo interfaz.
 - **El JWT técnico de la cátedra nunca llega a la app.**

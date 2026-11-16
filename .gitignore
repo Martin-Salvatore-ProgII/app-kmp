@@ -1,0 +1,32 @@
+### Gradle ###
+.gradle/
+.kotlin/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+### Android ###
+# Ruta del SDK de cada máquina; la genera Android Studio.
+local.properties
+*.apk
+*.aab
+captures/
+.cxx/
+.externalNativeBuild/
+
+### IntelliJ IDEA / Android Studio ###
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+### VS Code ###
+.vscode/
+
+### Sistema ###
+.DS_Store
+
+### Configuración local y secretos ###
+# El certificado de los backends se genera en cada máquina (ADR-0073).
+secrets/
+*.crt

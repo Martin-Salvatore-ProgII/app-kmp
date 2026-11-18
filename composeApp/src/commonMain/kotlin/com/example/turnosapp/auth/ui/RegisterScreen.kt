@@ -1,6 +1,7 @@
 package com.example.turnosapp.auth.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -74,6 +75,8 @@ fun RegisterScreen(
 ) {
     Column(modifier = Modifier.fillMaxSize().imePadding()) {
         TopAppBar(
+            // El Scaffold de la navegación ya deja el lugar de la barra de estado: no se repite.
+            windowInsets = WindowInsets(0),
             title = { Text("Crear cuenta") },
             navigationIcon = {
                 IconButton(onClick = { onAction(RegisterAction.BackClicked) }, enabled = !state.isLoading) {

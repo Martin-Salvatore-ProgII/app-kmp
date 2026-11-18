@@ -9,7 +9,8 @@ import io.ktor.client.engine.okhttp.OkHttp
  * Vive lo mismo que el proceso de la app. Acá se crea el contenedor de dependencias, una sola vez:
  * si lo creara la Activity, se volvería a crear en cada rotación de pantalla (ADR-0052).
  *
- * Es el punto donde lo de Android entra al código común: el motor HTTP y las URL del build.
+ * Es el punto donde lo de Android entra al código común: el motor HTTP, las URL del build y el
+ * almacenamiento cifrado del JWT.
  */
 class TurnosApplication : Application() {
 
@@ -25,6 +26,7 @@ class TurnosApplication : Application() {
                 turnos = BuildConfig.TURNOS_URL,
                 catalog = BuildConfig.CATALOG_URL,
             ),
+            tokenStorage = KeystoreTokenStorage(this),
         )
     }
 }

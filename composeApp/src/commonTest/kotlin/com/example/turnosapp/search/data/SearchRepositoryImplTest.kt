@@ -1,5 +1,6 @@
 package com.example.turnosapp.search.data
 
+import com.example.turnosapp.core.error.AppError
 import com.example.turnosapp.core.network.ServiceUrls
 import com.example.turnosapp.core.network.createHttpClient
 import com.example.turnosapp.core.session.FakeSessionRepository
@@ -106,6 +107,34 @@ class SearchRepositoryImplTest {
 
         assertEquals(listOf(Category(1, "Cardiologia")), result.getOrThrow())
         assertEquals("https://catalogo/api/professional-categories", lastRequest!!.url.toString())
+    }
+
+    @Test
+    fun `lee si hay una sincronización en curso e ignora el resto del estado`() = runTest {
+        val repository = repositoryAnswering(
+            """{"localVersion":7,"syncInProgress":true,"lastSuccessAt":"2026-11-18T13:45:00Z","lastSuccessType":"INCREMENTAL","lastErrorAt":null,"lastError":null}""",
+        )
+
+        val result = repository.isCatalogSyncing()
+
+        assertEquals(true, result.getOrThrow())
+        assertEquals("https://catalogo/api/catalog/sync-status", lastRequest!!.url.toString())
+    }
+
+    @Test
+    fun `un 503 CATALOG_NOT_READY de la búsqueda llega como CatalogNotReady`() = runTest {
+        val engine = MockEngine {
+            respond(
+                """{"status":503,"code":"CATALOG_NOT_READY"}""",
+                HttpStatusCode.ServiceUnavailable,
+                headersOf(HttpHeaders.ContentType, "application/problem+json"),
+            )
+        }
+        val api = SearchApi(createHttpClient(engine, FakeSessionRepository()), ServiceUrls("https://turnos", "https://catalogo"))
+
+        val result = SearchRepositoryImpl(api, SearchMapper()).search(SearchFilters(), page = 0)
+
+        assertEquals(AppError.CatalogNotReady, result.exceptionOrNull())
     }
 
     private companion object {

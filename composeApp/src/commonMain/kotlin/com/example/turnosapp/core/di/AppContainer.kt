@@ -1,5 +1,8 @@
 package com.example.turnosapp.core.di
 
+import com.example.turnosapp.auth.data.AuthRepository
+import com.example.turnosapp.auth.data.AuthRepositoryImpl
+import com.example.turnosapp.auth.data.remote.AuthApi
 import com.example.turnosapp.core.network.ServiceUrls
 import com.example.turnosapp.core.network.createHttpClient
 import com.example.turnosapp.core.session.SessionRepository
@@ -27,4 +30,6 @@ class AppContainer(
 
     // Las APIs de cada feature lo reciben junto con `urls` (por ejemplo, `ReservationApi(httpClient, urls)`).
     private val httpClient = createHttpClient(httpEngine)
+
+    val authRepository: AuthRepository = AuthRepositoryImpl(AuthApi(httpClient, urls), sessionRepository)
 }

@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,16 +49,26 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.turnosapp.core.di.AppContainer
 import com.example.turnosapp.core.ui.AppDatePickerDialog
+import com.example.turnosapp.core.ui.InitialsAvatar
 import com.example.turnosapp.core.ui.shortLabel
 import com.example.turnosapp.search.domain.model.ProfessionalSummary
+import kotlinx.datetime.LocalDate
 
 /** Conecta la pantalla con su ViewModel. */
 @Composable
 fun SearchRoute(
     container: AppContainer,
+    onProfessionalClick: (professionalId: Long, searchedDate: LocalDate?) -> Unit,
     viewModel: SearchViewModel = viewModel { SearchViewModel(container.searchRepository) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is SearchEffect.NavigateToProfessional -> onProfessionalClick(effect.professionalId, effect.searchedDate)
+            }
+        }
+    }
     SearchScreen(state = state, onAction = viewModel::onAction)
 }
 
@@ -223,7 +234,9 @@ private fun Results(
                 contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
             ) {
                 item { ResultCount(state.totalCount) }
-                items(state.professionals, key = { it.id }) { ProfessionalCard(it) }
+                items(state.professionals, key = { it.id }) {
+                    ProfessionalCard(it, onClick = { onAction(SearchAction.ProfessionalClicked(it.id)) })
+                }
                 if (state.canLoadMore || state.loadMoreErrorMessage != null) {
                     item { LoadMoreFooter(state, onAction) }
                 }
@@ -272,14 +285,14 @@ private fun LoadMoreFooter(state: SearchUiState, onAction: (SearchAction) -> Uni
 }
 
 @Composable
-private fun ProfessionalCard(professional: ProfessionalSummary) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+private fun ProfessionalCard(professional: ProfessionalSummary, onClick: () -> Unit) {
+    OutlinedCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.heightIn(min = 76.dp).padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
         ) {
-            Initials(professional, enabled = professional.enabled)
+            InitialsAvatar(professional.firstName, professional.lastName, enabled = professional.enabled)
             Column(modifier = Modifier.weight(1f)) {
                 Text(professional.fullName, style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -297,24 +310,6 @@ private fun ProfessionalCard(professional: ProfessionalSummary) {
             }
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
         }
-    }
-}
-
-@Composable
-internal fun Initials(professional: ProfessionalSummary, enabled: Boolean, size: Int = 44) {
-    val colors = MaterialTheme.colorScheme
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .size(size.dp)
-            .clip(CircleShape)
-            .background(if (enabled) colors.secondaryContainer else colors.surfaceVariant),
-    ) {
-        Text(
-            "${professional.firstName.take(1)}${professional.lastName.take(1)}",
-            style = MaterialTheme.typography.titleMedium,
-            color = if (enabled) colors.onSecondaryContainer else colors.onSurfaceVariant,
-        )
     }
 }
 

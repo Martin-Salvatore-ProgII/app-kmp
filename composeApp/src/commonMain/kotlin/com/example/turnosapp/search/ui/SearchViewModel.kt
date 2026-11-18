@@ -8,10 +8,13 @@ import com.example.turnosapp.search.data.SearchRepository
 import com.example.turnosapp.search.domain.model.SearchFilters
 import com.example.turnosapp.search.domain.model.TimeRange
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -36,6 +39,9 @@ class SearchViewModel(
 
     private val _state = MutableStateFlow(SearchUiState(today = today))
     val state: StateFlow<SearchUiState> = _state.asStateFlow()
+
+    private val _effects = Channel<SearchEffect>(Channel.BUFFERED)
+    val effects: Flow<SearchEffect> = _effects.receiveAsFlow()
 
     // La búsqueda en curso, o la que espera a que se deje de escribir. Una búsqueda nueva la
     // cancela, así una respuesta vieja nunca pisa a una más nueva.
@@ -86,6 +92,9 @@ class SearchViewModel(
 
             SearchAction.Retry -> search()
             SearchAction.LoadMore -> loadMore()
+            is SearchAction.ProfessionalClicked -> viewModelScope.launch {
+                _effects.send(SearchEffect.NavigateToProfessional(action.professionalId, _state.value.filters.date))
+            }
         }
     }
 

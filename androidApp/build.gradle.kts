@@ -42,6 +42,59 @@ android {
     }
 }
 
+// Certificado autofirmado de los backends (ADR-0073, ADR-0075). No se commitea: se copia al compilar
+// desde donde lo deja el script de turnos-service, o desde la ruta de `tls.cert` en local.properties.
+val tlsCertificatePath: String =
+    rootProject.file(localProperty("tls.cert", "../turnos-service/secrets/tls.crt")).absolutePath
+
+val copyTlsCertificate = tasks.register<CopyTlsCertificate>("copyTlsCertificate") {
+    certificate.from(tlsCertificatePath)
+    certificatePath.set(tlsCertificatePath)
+    outputDirectory.set(layout.buildDirectory.dir("generated/tlsCertificate/res"))
+}
+
+// El certificado entra a la app como el recurso `@raw/tls_cert`, que usa network_security_config.xml.
+androidComponents {
+    onVariants { variant ->
+        variant.sources.res?.addGeneratedSourceDirectory(copyTlsCertificate, CopyTlsCertificate::outputDirectory)
+    }
+}
+
+/**
+ * Copia el certificado a los recursos de la app. Si falta o no es un certificado, corta el build con
+ * un mensaje que dice qué hacer: compilar sin él daría una app que no puede hablar con ningún backend.
+ */
+abstract class CopyTlsCertificate : DefaultTask() {
+
+    // Se declara como entrada para que Gradle vuelva a copiarlo cuando se regenera el certificado.
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val certificate: ConfigurableFileCollection
+
+    @get:Input
+    abstract val certificatePath: Property<String>
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val source = File(certificatePath.get())
+        if (!source.isFile) {
+            throw GradleException(
+                "No se encontró el certificado de los backends en $source. Generalo con " +
+                    "./generar-certificado.sh desde turnos-service, o indicá su ruta con tls.cert en local.properties.",
+            )
+        }
+        if (!source.readText().contains("-----BEGIN CERTIFICATE-----")) {
+            throw GradleException("$source no es un certificado PEM. Volvé a generarlo con ./generar-certificado.sh.")
+        }
+        val rawDirectory = outputDirectory.get().dir("raw").asFile
+        rawDirectory.mkdirs()
+        source.copyTo(rawDirectory.resolve("tls_cert.crt"), overwrite = true)
+    }
+}
+
 dependencies {
     implementation(projects.composeApp)
     implementation(libs.androidx.activity.compose)

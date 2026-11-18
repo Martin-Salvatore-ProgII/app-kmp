@@ -92,4 +92,26 @@ class LoginViewModelTest {
 
         assertEquals("Tu sesión venció. Iniciá sesión de nuevo.", state.infoMessage)
     }
+
+    @Test
+    fun `un 401 marca los dos campos y corregir uno los desmarca`() = runTest {
+        repository.loginResult = Result.failure(AppError.Unauthorized)
+        val viewModel = viewModelWithCredentials()
+        viewModel.onAction(LoginAction.Submit)
+        assertEquals(true, viewModel.state.value.invalidCredentials)
+
+        viewModel.onAction(LoginAction.PasswordChanged("otra"))
+
+        assertEquals(false, viewModel.state.value.invalidCredentials)
+    }
+
+    @Test
+    fun `un error de conexión no marca los campos`() = runTest {
+        repository.loginResult = Result.failure(AppError.Network)
+        val viewModel = viewModelWithCredentials()
+
+        viewModel.onAction(LoginAction.Submit)
+
+        assertEquals(false, viewModel.state.value.invalidCredentials)
+    }
 }

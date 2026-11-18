@@ -93,4 +93,25 @@ class RegisterViewModelTest {
         assertEquals(null, viewModel.state.value.fieldErrors[RegistrationField.EMAIL])
         assertEquals("Este dato es obligatorio.", viewModel.state.value.fieldErrors[RegistrationField.LOGIN])
     }
+
+    @Test
+    fun `el campo de la foto aparece al pedirlo o si el backend lo marca`() {
+        val viewModel = RegisterViewModel(repository, ValidateRegistrationUseCase())
+        assertEquals(false, viewModel.state.value.showImageUrl)
+
+        viewModel.onAction(RegisterAction.ImageUrlExpanded)
+        assertEquals(true, viewModel.state.value.showImageUrl)
+
+        val marked = RegisterUiState(fieldErrors = mapOf(RegistrationField.IMAGE_URL to "Hasta 256 caracteres."))
+        assertEquals(true, marked.showImageUrl)
+    }
+
+    @Test
+    fun `mostrar la contraseña alterna su visibilidad`() {
+        val viewModel = RegisterViewModel(repository, ValidateRegistrationUseCase())
+
+        viewModel.onAction(RegisterAction.PasswordVisibilityToggled)
+
+        assertEquals(true, viewModel.state.value.passwordVisible)
+    }
 }

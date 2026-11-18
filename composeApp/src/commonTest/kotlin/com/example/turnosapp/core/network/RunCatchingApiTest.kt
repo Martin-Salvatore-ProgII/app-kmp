@@ -1,6 +1,7 @@
 package com.example.turnosapp.core.network
 
 import com.example.turnosapp.core.error.AppError
+import com.example.turnosapp.core.session.FakeSessionRepository
 import io.ktor.client.call.body
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -28,6 +29,7 @@ class RunCatchingApiTest {
             MockEngine {
                 respond(content = body, status = status, headers = headersOf(HttpHeaders.ContentType, contentType))
             },
+            FakeSessionRepository(),
         )
 
     @Test
@@ -84,7 +86,7 @@ class RunCatchingApiTest {
 
     @Test
     fun `una falla de conexion se traduce a Network`() = runTest {
-        val client = createHttpClient(MockEngine { throw IOException("sin conexión") })
+        val client = createHttpClient(MockEngine { throw IOException("sin conexión") }, FakeSessionRepository())
 
         val result = runCatchingApi { client.get("https://backend/reservas").body<Greeting>() }
 

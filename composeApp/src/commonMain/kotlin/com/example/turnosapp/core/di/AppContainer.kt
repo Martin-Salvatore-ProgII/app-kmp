@@ -30,7 +30,7 @@ class AppContainer(
     val sessionRepository: SessionRepository = SessionRepositoryImpl(tokenStorage)
 
     // Las APIs de cada feature lo reciben junto con `urls` (por ejemplo, `ReservationApi(httpClient, urls)`).
-    private val httpClient = createHttpClient(httpEngine)
+    private val httpClient = createHttpClient(httpEngine, sessionRepository)
 
     val authRepository: AuthRepository = AuthRepositoryImpl(AuthApi(httpClient, urls), sessionRepository, RegistrationMapper())
 }

@@ -77,4 +77,12 @@ class LoginViewModelTest {
         assertEquals(0, repository.loginCalls)
         assertEquals("Ingresá tu usuario y tu contraseña.", viewModel.state.value.errorMessage)
     }
+
+    @Test
+    fun `al llegar desde el registro el usuario ya está escrito y se avisa que la cuenta se creó`() {
+        val state = LoginViewModel(repository, registeredLogin = "ana").state.value
+
+        assertEquals("ana", state.username)
+        assertEquals("Tu cuenta quedó creada. Ingresá con tu contraseña.", state.infoMessage)
+    }
 }

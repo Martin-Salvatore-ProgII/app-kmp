@@ -44,6 +44,7 @@ internal fun toAppError(status: Int, problem: ProblemDto?): AppError {
         // Si un campo trae más de un error, se muestra el primero.
         status == 400 && fieldErrors.isNotEmpty() ->
             AppError.Validation(fieldErrors.groupBy { it.field }.mapValues { (_, errors) -> errors.first().message })
+        status == 503 && code == "CATALOG_NOT_READY" -> AppError.CatalogNotReady
         status == 503 -> AppError.Unavailable
         status in 400..499 && code != null -> AppError.Business(status, code)
         else -> AppError.Unknown

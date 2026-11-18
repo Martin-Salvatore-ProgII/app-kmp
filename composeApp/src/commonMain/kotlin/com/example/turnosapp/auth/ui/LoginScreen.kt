@@ -35,9 +35,12 @@ import com.example.turnosapp.core.di.AppContainer
 fun LoginRoute(
     container: AppContainer,
     registeredLogin: String?,
+    sessionExpired: Boolean,
     onLoggedIn: () -> Unit,
     onRegisterClick: () -> Unit,
-    viewModel: LoginViewModel = viewModel { LoginViewModel(container.authRepository, registeredLogin) },
+    viewModel: LoginViewModel = viewModel {
+        LoginViewModel(container.authRepository, registeredLogin, sessionExpired)
+    },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {

@@ -18,13 +18,15 @@ import kotlinx.coroutines.launch
 class LoginViewModel(
     private val authRepository: AuthRepository,
     registeredLogin: String? = null,
+    sessionExpired: Boolean = false,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
-        if (registeredLogin == null) {
-            LoginUiState()
-        } else {
-            LoginUiState(username = registeredLogin, infoMessage = "Tu cuenta quedó creada. Ingresá con tu contraseña.")
+        when {
+            registeredLogin != null ->
+                LoginUiState(username = registeredLogin, infoMessage = "Tu cuenta quedó creada. Ingresá con tu contraseña.")
+            sessionExpired -> LoginUiState(infoMessage = AppError.Unauthorized.toUserMessage())
+            else -> LoginUiState()
         },
     )
     val state: StateFlow<LoginUiState> = _state.asStateFlow()

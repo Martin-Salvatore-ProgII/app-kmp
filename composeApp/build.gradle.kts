@@ -28,6 +28,9 @@ kotlin {
             implementation(libs.compose.material3)
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.compose.material.icons.core)
+            // ViewModel con viewModelScope, y lectura del estado atada al ciclo de vida de la pantalla (ADR-0052).
+            implementation(libs.lifecycle.viewmodel.compose)
+            implementation(libs.lifecycle.runtime.compose)
             // Rutas tipadas: cada destino es una clase @Serializable (ADR-0052).
             implementation(libs.navigation.compose)
             implementation(libs.kotlinx.serialization.json)

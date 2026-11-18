@@ -34,9 +34,10 @@ import com.example.turnosapp.core.di.AppContainer
 @Composable
 fun LoginRoute(
     container: AppContainer,
+    registeredLogin: String?,
     onLoggedIn: () -> Unit,
     onRegisterClick: () -> Unit,
-    viewModel: LoginViewModel = viewModel { LoginViewModel(container.authRepository) },
+    viewModel: LoginViewModel = viewModel { LoginViewModel(container.authRepository, registeredLogin) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
@@ -95,6 +96,9 @@ fun LoginScreen(
             Text("Recordarme durante 30 días")
         }
 
+        state.infoMessage?.let {
+            Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
+        }
         state.errorMessage?.let {
             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
         }

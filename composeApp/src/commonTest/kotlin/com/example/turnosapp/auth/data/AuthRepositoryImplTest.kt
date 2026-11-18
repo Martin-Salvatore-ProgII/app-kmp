@@ -1,6 +1,8 @@
 package com.example.turnosapp.auth.data
 
+import com.example.turnosapp.auth.data.mapper.RegistrationMapper
 import com.example.turnosapp.auth.data.remote.AuthApi
+import com.example.turnosapp.auth.domain.model.Registration
 import com.example.turnosapp.core.error.AppError
 import com.example.turnosapp.core.network.ServiceUrls
 import com.example.turnosapp.core.network.createHttpClient
@@ -30,7 +32,18 @@ class AuthRepositoryImplTest {
             respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
         }
         val api = AuthApi(createHttpClient(engine), ServiceUrls(turnos = "https://turnos", catalog = "https://catalogo"))
-        return AuthRepositoryImpl(api, session)
+        return AuthRepositoryImpl(api, session, RegistrationMapper())
+    }
+
+    @Test
+    fun `un registro aceptado con 201 sin cuerpo es un éxito y no inicia sesión`() = runTest {
+        val repository = repositoryAnswering(HttpStatusCode.Created, "")
+
+        val result = repository.register(Registration("ana", "secreta", "Ana", "Pérez", "ana@example.com", ""))
+
+        assertTrue(result.isSuccess)
+        assertEquals("https://turnos/api/register", lastRequest!!.url.toString())
+        assertNull(session.token)
     }
 
     @Test

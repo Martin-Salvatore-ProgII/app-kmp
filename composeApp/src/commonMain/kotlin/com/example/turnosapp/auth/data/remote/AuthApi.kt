@@ -1,6 +1,7 @@
 package com.example.turnosapp.auth.data.remote
 
 import com.example.turnosapp.auth.data.remote.dto.LoginRequestDto
+import com.example.turnosapp.auth.data.remote.dto.RegisterRequestDto
 import com.example.turnosapp.auth.data.remote.dto.TokenResponseDto
 import com.example.turnosapp.core.network.ServiceUrls
 import io.ktor.client.HttpClient
@@ -15,6 +16,13 @@ class AuthApi(
     private val client: HttpClient,
     private val urls: ServiceUrls,
 ) {
+    suspend fun register(request: RegisterRequestDto) {
+        client.post("${urls.turnos}/api/register") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+    }
+
     suspend fun authenticate(request: LoginRequestDto): TokenResponseDto =
         client.post("${urls.turnos}/api/authenticate") {
             contentType(ContentType.Application.Json)

@@ -6,4 +6,6 @@ data class LoginUiState(
     val rememberMe: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    /** Aviso que no es un error, por ejemplo que la cuenta se creó. */
+    val infoMessage: String? = null,
 )

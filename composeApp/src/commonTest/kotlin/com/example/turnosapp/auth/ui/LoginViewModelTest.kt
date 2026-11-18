@@ -85,4 +85,11 @@ class LoginViewModelTest {
         assertEquals("ana", state.username)
         assertEquals("Tu cuenta quedó creada. Ingresá con tu contraseña.", state.infoMessage)
     }
+
+    @Test
+    fun `al llegar por una sesión vencida se avisa`() {
+        val state = LoginViewModel(repository, sessionExpired = true).state.value
+
+        assertEquals("Tu sesión venció. Iniciá sesión de nuevo.", state.infoMessage)
+    }
 }

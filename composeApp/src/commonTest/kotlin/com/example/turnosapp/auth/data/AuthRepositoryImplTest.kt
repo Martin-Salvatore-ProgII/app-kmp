@@ -31,7 +31,7 @@ class AuthRepositoryImplTest {
             lastRequest = request
             respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
         }
-        val api = AuthApi(createHttpClient(engine), ServiceUrls(turnos = "https://turnos", catalog = "https://catalogo"))
+        val api = AuthApi(createHttpClient(engine, session), ServiceUrls(turnos = "https://turnos", catalog = "https://catalogo"))
         return AuthRepositoryImpl(api, session, RegistrationMapper())
     }
 

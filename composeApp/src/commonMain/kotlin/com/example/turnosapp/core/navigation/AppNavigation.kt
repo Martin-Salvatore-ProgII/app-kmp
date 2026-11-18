@@ -63,6 +63,7 @@ fun AppNavigation(
         ) {
             composable<Login> {
                 LoginRoute(
+                    container = container,
                     onLoggedIn = {
                         // Login sale de la pila: el botón Atrás desde Buscar cierra la app, no vuelve a Login.
                         navController.navigate(Search) {

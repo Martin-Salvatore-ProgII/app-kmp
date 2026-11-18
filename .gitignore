@@ -23,6 +23,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### Scripts locales ###
+boot_mobile.sh
+
 ### Sistema ###
 .DS_Store
 

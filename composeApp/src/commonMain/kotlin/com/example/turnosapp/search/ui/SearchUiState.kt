@@ -24,6 +24,10 @@ data class SearchUiState(
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val errorMessage: String? = null,
+    /** El catálogo está aplicando una sincronización: se busca sobre la copia anterior (ADR-0010). */
+    val catalogSyncing: Boolean = false,
+    /** El catálogo todavía no tiene su primera copia (`503 CATALOG_NOT_READY`). */
+    val catalogNotReady: Boolean = false,
     /** Falló una página siguiente: la lista que ya estaba queda a la vista. */
     val loadMoreErrorMessage: String? = null,
     val openSheet: SearchSheet? = null,

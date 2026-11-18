@@ -2,6 +2,7 @@ package com.example.turnosapp.search.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.turnosapp.core.error.AppError
 import com.example.turnosapp.core.error.toUserMessage
 import com.example.turnosapp.search.data.SearchRepository
 import com.example.turnosapp.search.domain.model.SearchFilters
@@ -103,21 +104,37 @@ class SearchViewModel(
             repository.search(_state.value.filters, page = 0)
                 .onSuccess { page ->
                     _state.update {
-                        it.copy(isLoading = false, professionals = page.items, totalCount = page.totalCount, loadedPages = 1)
+                        it.copy(
+                            isLoading = false,
+                            catalogNotReady = false,
+                            professionals = page.items,
+                            totalCount = page.totalCount,
+                            loadedPages = 1,
+                        )
                     }
                 }
                 .onFailure { error ->
                     _state.update {
                         it.copy(
                             isLoading = false,
+                            // Antes del primer snapshot no hay nada que buscar: se muestra una espera, no un error.
+                            catalogNotReady = error == AppError.CatalogNotReady,
                             professionals = emptyList(),
                             totalCount = 0,
                             loadedPages = 0,
-                            errorMessage = error.toUserMessage(),
+                            errorMessage = if (error == AppError.CatalogNotReady) null else error.toUserMessage(),
                         )
                     }
                 }
+            refreshSyncNotice()
         }
+    }
+
+    // El aviso de "actualizando" se revisa con cada búsqueda, sin consultar cada tantos segundos
+    // (ADR-0079). Si el estado no se pudo leer, no se muestra el aviso: la búsqueda no depende de él.
+    private suspend fun refreshSyncNotice() {
+        val syncing = repository.isCatalogSyncing().getOrDefault(false)
+        _state.update { it.copy(catalogSyncing = syncing) }
     }
 
     // Suma la página siguiente a la lista. Usa el mismo Job que la búsqueda: si cambian los

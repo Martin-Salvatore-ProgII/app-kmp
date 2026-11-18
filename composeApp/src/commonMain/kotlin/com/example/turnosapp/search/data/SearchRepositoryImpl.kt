@@ -27,4 +27,7 @@ class SearchRepositoryImpl(
             val response = api.searchProfessionals(filters, page, PAGE_SIZE)
             Page(response.items.map(mapper::toDomain), response.totalCount)
         }
+
+    override suspend fun isCatalogSyncing(): Result<Boolean> =
+        runCatchingApi { api.getSyncStatus().syncInProgress }
 }

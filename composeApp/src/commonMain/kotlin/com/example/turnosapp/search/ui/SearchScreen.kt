@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -69,9 +70,14 @@ fun SearchScreen(
     state: SearchUiState,
     onAction: (SearchAction) -> Unit,
 ) {
+    if (state.catalogNotReady) {
+        CatalogNotReady(isLoading = state.isLoading, onRetry = { onAction(SearchAction.Retry) })
+        return
+    }
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         NameField(name = state.filters.name, onAction = onAction)
         FilterChips(state = state, onAction = onAction, modifier = Modifier.padding(top = 16.dp))
+        if (state.catalogSyncing) SyncingNotice(modifier = Modifier.padding(top = 16.dp))
         Results(state = state, onAction = onAction, modifier = Modifier.weight(1f).padding(top = 12.dp))
     }
 
@@ -309,6 +315,67 @@ internal fun Initials(professional: ProfessionalSummary, enabled: Boolean, size:
             style = MaterialTheme.typography.titleMedium,
             color = if (enabled) colors.onSecondaryContainer else colors.onSurfaceVariant,
         )
+    }
+}
+
+/** Aviso corto y no bloqueante: la búsqueda sigue funcionando con la copia anterior (ADR-0010, ADR-0079). */
+@Composable
+private fun SyncingNotice(modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.tertiaryContainer)
+            .heightIn(min = 40.dp)
+            .padding(horizontal = 16.dp),
+    ) {
+        Icon(
+            Icons.Filled.Refresh,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(
+            "Actualizando el catálogo…",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+        )
+    }
+}
+
+/** El catálogo todavía no tiene su primera copia: no hay filtros que mostrar, solo esperar y reintentar. */
+@Composable
+private fun CatalogNotReady(isLoading: Boolean, onRetry: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp),
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(72.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
+        ) {
+            Icon(
+                Icons.Filled.Refresh,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(36.dp),
+            )
+        }
+        Text(
+            "El catálogo todavía se está cargando",
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            "Es la primera vez que se trae el catálogo de profesionales. En unos segundos vas a poder buscar.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Button(onClick = onRetry, enabled = !isLoading) { Text("Reintentar") }
     }
 }
 

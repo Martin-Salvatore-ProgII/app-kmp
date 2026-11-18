@@ -1,6 +1,7 @@
 package com.example.turnosapp.search.data
 
 import com.example.turnosapp.search.domain.model.Category
+import com.example.turnosapp.search.domain.model.Page
 import com.example.turnosapp.search.domain.model.ProfessionalSummary
 import com.example.turnosapp.search.domain.model.SearchFilters
 
@@ -11,8 +12,11 @@ interface SearchRepository {
     suspend fun getCategories(): Result<List<Category>>
 
     /**
-     * Los profesionales que cumplen todos los filtros, ordenados por apellido y nombre.
+     * Una página de los profesionales que cumplen todos los filtros, ordenados por apellido y nombre,
+     * con el total para saber si hay más.
      * Un filtro inválido llega como `AppError.Business` (`DATE_OUT_OF_RANGE`) o `AppError.Validation`.
+     *
+     * @param page la página, desde 0.
      */
-    suspend fun search(filters: SearchFilters): Result<List<ProfessionalSummary>>
+    suspend fun search(filters: SearchFilters, page: Int): Result<Page<ProfessionalSummary>>
 }

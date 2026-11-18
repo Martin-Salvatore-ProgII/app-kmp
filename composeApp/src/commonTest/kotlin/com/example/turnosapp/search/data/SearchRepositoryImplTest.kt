@@ -25,10 +25,14 @@ class SearchRepositoryImplTest {
 
     private var lastRequest: HttpRequestData? = null
 
-    private fun repositoryAnswering(body: String): SearchRepository {
+    private fun repositoryAnswering(body: String, totalCount: String? = null): SearchRepository {
         val engine = MockEngine { request ->
             lastRequest = request
-            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            val headers = buildMap {
+                put(HttpHeaders.ContentType, listOf("application/json"))
+                totalCount?.let { put("X-Total-Count", listOf(it)) }
+            }
+            respond(body, HttpStatusCode.OK, headersOf(*headers.toList().toTypedArray()))
         }
         val client = createHttpClient(engine, FakeSessionRepository())
         val api = SearchApi(client, ServiceUrls(turnos = "https://turnos", catalog = "https://catalogo"))
@@ -36,12 +40,31 @@ class SearchRepositoryImplTest {
     }
 
     @Test
-    fun `sin filtros pide solo los habilitados`() = runTest {
+    fun `sin filtros pide solo los habilitados, la página y su tamaño`() = runTest {
         val repository = repositoryAnswering("[]")
 
-        repository.search(SearchFilters())
+        repository.search(SearchFilters(), page = 2)
 
-        assertEquals("https://catalogo/api/professionals?enabled=true", lastRequest!!.url.toString())
+        assertEquals("https://catalogo/api/professionals?enabled=true&page=2&size=20", lastRequest!!.url.toString())
+    }
+
+    @Test
+    fun `el total sale de la cabecera X-Total-Count`() = runTest {
+        val repository = repositoryAnswering(PROFESSIONAL_JSON, totalCount = "21")
+
+        val page = repository.search(SearchFilters(), page = 0).getOrThrow()
+
+        assertEquals(21, page.totalCount)
+        assertEquals(1, page.items.size)
+    }
+
+    @Test
+    fun `sin la cabecera, el total es lo que ya llegó`() = runTest {
+        val repository = repositoryAnswering(PROFESSIONAL_JSON)
+
+        val page = repository.search(SearchFilters(), page = 1).getOrThrow()
+
+        assertEquals(21, page.totalCount)
     }
 
     @Test
@@ -55,7 +78,7 @@ class SearchRepositoryImplTest {
             enabled = false,
         )
 
-        repository.search(filters)
+        repository.search(filters, page = 0)
 
         val parameters = lastRequest!!.url.parameters
         assertEquals("mar", parameters["name"])
@@ -68,13 +91,11 @@ class SearchRepositoryImplTest {
 
     @Test
     fun `traduce cada profesional al modelo de la pantalla`() = runTest {
-        val repository = repositoryAnswering(
-            """[{"id":202,"firstName":"Martin","lastName":"Rivas","category":{"id":1,"name":"Cardiologia"},"enabled":true}]""",
-        )
+        val repository = repositoryAnswering(PROFESSIONAL_JSON, totalCount = "1")
 
-        val result = repository.search(SearchFilters())
+        val result = repository.search(SearchFilters(), page = 0)
 
-        assertEquals(listOf(ProfessionalSummary(202, "Martin", "Rivas", "Cardiologia", true)), result.getOrThrow())
+        assertEquals(listOf(ProfessionalSummary(202, "Martin", "Rivas", "Cardiologia", true)), result.getOrThrow().items)
     }
 
     @Test
@@ -85,5 +106,10 @@ class SearchRepositoryImplTest {
 
         assertEquals(listOf(Category(1, "Cardiologia")), result.getOrThrow())
         assertEquals("https://catalogo/api/professional-categories", lastRequest!!.url.toString())
+    }
+
+    private companion object {
+        const val PROFESSIONAL_JSON =
+            """[{"id":202,"firstName":"Martin","lastName":"Rivas","category":{"id":1,"name":"Cardiologia"},"enabled":true}]"""
     }
 }

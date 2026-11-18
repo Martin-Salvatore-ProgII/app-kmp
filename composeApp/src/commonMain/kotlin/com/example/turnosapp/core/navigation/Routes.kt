@@ -6,8 +6,9 @@ import kotlinx.serialization.Serializable
 // El compilador verifica que se navegue con los argumentos correctos, sin armar textos de URL a mano.
 // Las pantallas de detalle (profesional, turnos, reserva) suman su ruta en la milestone que las crea.
 
+/** @param registeredLogin el usuario que se acaba de registrar, para dejarlo escrito; null si se llega de otro lado. */
 @Serializable
-data object Login
+data class Login(val registeredLogin: String? = null)
 
 @Serializable
 data object Register

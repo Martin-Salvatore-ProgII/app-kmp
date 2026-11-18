@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.turnosapp.admin.ui.AdminRoute
 import com.example.turnosapp.auth.ui.LoginRoute
 import com.example.turnosapp.auth.ui.RegisterRoute
@@ -58,12 +59,13 @@ fun AppNavigation(
         // Por ahora se entra siempre por Login. Desde la M2, con un JWT vigente se entra directo a Buscar.
         NavHost(
             navController = navController,
-            startDestination = Login,
+            startDestination = Login(),
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable<Login> {
+            composable<Login> { backStackEntry ->
                 LoginRoute(
                     container = container,
+                    registeredLogin = backStackEntry.toRoute<Login>().registeredLogin,
                     onLoggedIn = {
                         // Login sale de la pila: el botón Atrás desde Buscar cierra la app, no vuelve a Login.
                         navController.navigate(Search) {
@@ -74,7 +76,17 @@ fun AppNavigation(
                 )
             }
             composable<Register> {
-                RegisterRoute(onBack = { navController.popBackStack() })
+                RegisterRoute(
+                    container = container,
+                    onRegistered = { login ->
+                        // Se reemplaza el Login de la pila por uno nuevo con el usuario escrito, así Atrás no
+                        // vuelve al formulario de registro.
+                        navController.navigate(Login(registeredLogin = login)) {
+                            popUpTo<Login> { inclusive = true }
+                        }
+                    },
+                    onBack = { navController.popBackStack() },
+                )
             }
             composable<Search> { SearchRoute() }
             composable<MyReservations> { MyReservationsRoute() }

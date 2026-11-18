@@ -17,9 +17,16 @@ import kotlinx.coroutines.launch
 /** Inicio de sesión (HU-02), con la opción de recordar la sesión 30 días (ADR-0033). */
 class LoginViewModel(
     private val authRepository: AuthRepository,
+    registeredLogin: String? = null,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(LoginUiState())
+    private val _state = MutableStateFlow(
+        if (registeredLogin == null) {
+            LoginUiState()
+        } else {
+            LoginUiState(username = registeredLogin, infoMessage = "Tu cuenta quedó creada. Ingresá con tu contraseña.")
+        },
+    )
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
 
     private val _effects = Channel<LoginEffect>(Channel.BUFFERED)
@@ -44,7 +51,7 @@ class LoginViewModel(
             return
         }
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update { it.copy(isLoading = true, errorMessage = null, infoMessage = null) }
             authRepository.login(current.username, current.password, current.rememberMe)
                 .onSuccess {
                     _state.update { it.copy(isLoading = false, password = "") }

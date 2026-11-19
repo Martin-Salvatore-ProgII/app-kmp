@@ -1,6 +1,7 @@
 package com.example.turnosapp.reservation.ui
 
 import com.example.turnosapp.core.error.AppError
+import com.example.turnosapp.reservation.domain.ValidatePhoneUseCase
 import com.example.turnosapp.reservation.domain.model.ReservationStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,7 +42,7 @@ class ReservationViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun followingViewModel() =
-        ReservationViewModel(repository, "5b1f", clock).also { it.onAction(ReservationAction.ScreenStarted) }
+        ReservationViewModel(repository, ValidatePhoneUseCase(), "5b1f", clock).also { it.onAction(ReservationAction.ScreenStarted) }
 
     @Test
     fun `consulta cada 2 segundos hasta un estado final y ahí deja de consultar`() = runTest {
@@ -127,5 +128,59 @@ class ReservationViewModelTest {
 
         assertEquals("No se encontró la reserva.", viewModel.state.value.errorMessage)
         assertEquals(1, repository.getCalls)
+    }
+
+    private fun awaitingPhone(failureReason: String? = null) =
+        reservation(ReservationStatus.AWAITING_PHONE, expiresAt = start + 300.seconds, failureReason = failureReason)
+
+    @Test
+    fun `un teléfono válido se envía y pasa a confirmando`() = runTest {
+        repository.getResult = Result.success(awaitingPhone())
+        val viewModel = followingViewModel()
+
+        viewModel.onAction(ReservationAction.PhoneChanged("+54 9 11 5555-1234"))
+        viewModel.onAction(ReservationAction.SubmitPhoneClicked)
+
+        assertEquals(listOf("+54 9 11 5555-1234"), repository.submittedPhones)
+        assertEquals(ReservationPhase.Confirming, viewModel.state.value.phase)
+        viewModel.onAction(ReservationAction.ScreenStopped)
+    }
+
+    @Test
+    fun `un teléfono con formato inválido no se envía`() = runTest {
+        repository.getResult = Result.success(awaitingPhone())
+        val viewModel = followingViewModel()
+
+        viewModel.onAction(ReservationAction.PhoneChanged("11 5555"))
+        viewModel.onAction(ReservationAction.SubmitPhoneClicked)
+
+        assertEquals(emptyList(), repository.submittedPhones)
+        assertEquals("Tiene que tener entre 7 y 15 números. Puede empezar con +.", viewModel.state.value.phoneError)
+        viewModel.onAction(ReservationAction.ScreenStopped)
+    }
+
+    @Test
+    fun `sin tiempo no se envía el teléfono aunque el estado lo pida`() = runTest {
+        repository.getResult = Result.success(awaitingPhone())
+        val viewModel = followingViewModel()
+        viewModel.onAction(ReservationAction.PhoneChanged("+54 9 11 5555-1234"))
+
+        clock.advance(301.seconds)
+        advanceTimeBy(1_001)
+        viewModel.onAction(ReservationAction.SubmitPhoneClicked)
+
+        assertEquals(ReservationPhase.TimeUp, viewModel.state.value.phase)
+        assertEquals(emptyList(), repository.submittedPhones)
+        viewModel.onAction(ReservationAction.ScreenStopped)
+    }
+
+    @Test
+    fun `un rechazo de la cátedra se muestra y deja enviar otro`() = runTest {
+        repository.getResult = Result.success(awaitingPhone(failureReason = "INVALID_PHONE_NUMBER"))
+        val viewModel = followingViewModel()
+
+        assertTrue(viewModel.state.value.isPhoneRejected)
+        assertEquals(ReservationPhase.AwaitingPhone, viewModel.state.value.phase)
+        viewModel.onAction(ReservationAction.ScreenStopped)
     }
 }

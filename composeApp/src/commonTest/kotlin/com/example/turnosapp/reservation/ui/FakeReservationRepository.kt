@@ -14,6 +14,8 @@ open class FakeReservationRepository : ReservationRepository {
     var startCalls = 0
     var getResult: Result<Reservation> = Result.success(reservation(ReservationStatus.AWAITING_REQUEST))
     var getCalls = 0
+    var phoneResult: Result<Reservation> = Result.success(reservation(ReservationStatus.PHONE_SUBMITTED))
+    val submittedPhones = mutableListOf<String>()
 
     override suspend fun start(professionalId: Long, date: LocalDate, startTime: LocalTime): Result<Reservation> {
         startCalls++
@@ -23,6 +25,11 @@ open class FakeReservationRepository : ReservationRepository {
     override suspend fun get(reservationId: String): Result<Reservation> {
         getCalls++
         return getResult
+    }
+
+    override suspend fun submitPhone(reservationId: String, phoneNumber: String): Result<Reservation> {
+        submittedPhones += phoneNumber
+        return phoneResult
     }
 
     override suspend fun findActive(): Result<Reservation?> = activeResult

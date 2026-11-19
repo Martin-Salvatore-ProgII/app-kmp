@@ -1,0 +1,43 @@
+# Compila la app y ejecuta sus pruebas (ADR-0046, ADR-0047).
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build y tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # Cachea las dependencias de Gradle entre ejecuciones.
+      - uses: gradle/actions/setup-gradle@v6
+
+      # La app necesita un certificado para compilar (ADR-0075). El real se genera en cada máquina y no
+      # está en el repo; en el CI alcanza con uno descartable, porque acá no se habla con ningún backend.
+      # El SDK de Android ya viene en el runner (ANDROID_HOME).
+      - name: Generar un certificado descartable
+        run: |
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=ci" -keyout "$RUNNER_TEMP/tls.key" -out "$RUNNER_TEMP/tls.crt"
+          echo "tls.cert=$RUNNER_TEMP/tls.crt" > local.properties
+
+      - run: ./gradlew build
+
+      - name: Subir el reporte de pruebas si algo falla
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reporte-de-pruebas
+          path: composeApp/build/reports/tests/

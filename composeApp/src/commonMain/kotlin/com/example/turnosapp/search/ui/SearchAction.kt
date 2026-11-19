@@ -29,4 +29,5 @@ sealed interface SearchAction {
     data class EnabledSelected(val enabled: Boolean) : SearchAction
 
     data object Retry : SearchAction
+    data object LoadMore : SearchAction
 }

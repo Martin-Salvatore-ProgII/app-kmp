@@ -17,11 +17,20 @@ data class SearchUiState(
     val filters: SearchFilters = SearchFilters(),
     val categories: List<Category> = emptyList(),
     val professionals: List<ProfessionalSummary> = emptyList(),
+    /** El total que informa el catálogo para estos filtros, aunque no se hayan cargado todos. */
+    val totalCount: Int = 0,
+    /** Cuántas páginas hay cargadas; la próxima a pedir es esta. */
+    val loadedPages: Int = 0,
     val isLoading: Boolean = false,
+    val isLoadingMore: Boolean = false,
     val errorMessage: String? = null,
+    /** Falló una página siguiente: la lista que ya estaba queda a la vista. */
+    val loadMoreErrorMessage: String? = null,
     val openSheet: SearchSheet? = null,
     val customRange: CustomRangeDraft = CustomRangeDraft(),
-)
+) {
+    val canLoadMore: Boolean get() = professionals.size < totalCount
+}
 
 /** Las hojas inferiores y el calendario que abren los chips de los filtros. */
 enum class SearchSheet { CATEGORY, DATE, TIME_RANGE, ENABLED }

@@ -84,6 +84,7 @@ class SearchViewModel(
             }
 
             SearchAction.Retry -> search()
+            SearchAction.LoadMore -> loadMore()
         }
     }
 
@@ -93,19 +94,52 @@ class SearchViewModel(
         if (_state.value.filters != before) search(delayMillis)
     }
 
+    // Busca desde la primera página: cada cambio de filtros arranca la lista de nuevo.
     private fun search(delayMillis: Long = 0) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(delayMillis)
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
-            repository.search(_state.value.filters)
-                .onSuccess { professionals ->
-                    _state.update { it.copy(isLoading = false, professionals = professionals) }
+            _state.update { it.copy(isLoading = true, isLoadingMore = false, errorMessage = null, loadMoreErrorMessage = null) }
+            repository.search(_state.value.filters, page = 0)
+                .onSuccess { page ->
+                    _state.update {
+                        it.copy(isLoading = false, professionals = page.items, totalCount = page.totalCount, loadedPages = 1)
+                    }
                 }
                 .onFailure { error ->
                     _state.update {
-                        it.copy(isLoading = false, professionals = emptyList(), errorMessage = error.toUserMessage())
+                        it.copy(
+                            isLoading = false,
+                            professionals = emptyList(),
+                            totalCount = 0,
+                            loadedPages = 0,
+                            errorMessage = error.toUserMessage(),
+                        )
                     }
+                }
+        }
+    }
+
+    // Suma la página siguiente a la lista. Usa el mismo Job que la búsqueda: si cambian los
+    // filtros mientras llega, se cancela y no se mezclan resultados de dos búsquedas.
+    private fun loadMore() {
+        val current = _state.value
+        if (current.isLoading || current.isLoadingMore || !current.canLoadMore) return
+        searchJob = viewModelScope.launch {
+            _state.update { it.copy(isLoadingMore = true, loadMoreErrorMessage = null) }
+            repository.search(current.filters, page = current.loadedPages)
+                .onSuccess { page ->
+                    _state.update {
+                        it.copy(
+                            isLoadingMore = false,
+                            professionals = it.professionals + page.items,
+                            totalCount = page.totalCount,
+                            loadedPages = it.loadedPages + 1,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _state.update { it.copy(isLoadingMore = false, loadMoreErrorMessage = error.toUserMessage()) }
                 }
         }
     }

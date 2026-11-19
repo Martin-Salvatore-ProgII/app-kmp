@@ -23,12 +23,14 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -214,7 +216,50 @@ private fun Results(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
             ) {
+                item { ResultCount(state.totalCount) }
                 items(state.professionals, key = { it.id }) { ProfessionalCard(it) }
+                if (state.canLoadMore || state.loadMoreErrorMessage != null) {
+                    item { LoadMoreFooter(state, onAction) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResultCount(totalCount: Int) {
+    Text(
+        if (totalCount == 1) "1 profesional" else "$totalCount profesionales",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/** Al final de la lista: cuántos se ven de cuántos hay, y el botón para traer la página siguiente. */
+@Composable
+private fun LoadMoreFooter(state: SearchUiState, onAction: (SearchAction) -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+    ) {
+        Text(
+            "Mostrando ${state.professionals.size} de ${state.totalCount}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        state.loadMoreErrorMessage?.let {
+            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+        }
+        OutlinedButton(
+            onClick = { onAction(SearchAction.LoadMore) },
+            enabled = !state.isLoadingMore,
+            modifier = Modifier.heightIn(min = 48.dp),
+        ) {
+            if (state.isLoadingMore) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            } else {
+                Text(if (state.loadMoreErrorMessage != null) "Reintentar" else "Cargar más")
             }
         }
     }

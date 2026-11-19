@@ -20,10 +20,13 @@ class SearchApi(
     /**
      * Arma los parámetros del contrato con los filtros que haya. Un filtro vacío no se envía, y
      * `enabled` va siempre para que se vea qué se pidió. Las fechas y horas van en formato ISO
-     * (`2026-11-26`, `18:00`), que es lo que espera el catálogo.
+     * (`2026-11-26`, `18:00`), que es lo que espera el catálogo. El orden queda el del catálogo:
+     * apellido y nombre.
+     *
+     * @param page la página, desde 0.
      */
-    suspend fun searchProfessionals(filters: SearchFilters): List<ProfessionalSummaryDto> =
-        client.get("${urls.catalog}/api/professionals") {
+    suspend fun searchProfessionals(filters: SearchFilters, page: Int, size: Int): PagedResponse<ProfessionalSummaryDto> {
+        val response = client.get("${urls.catalog}/api/professionals") {
             filters.name.trim().takeIf { it.isNotEmpty() }?.let { parameter("name", it) }
             filters.category?.let { parameter("categoryId", it.id) }
             parameter("enabled", filters.enabled)
@@ -32,5 +35,17 @@ class SearchApi(
                 parameter("timeFrom", it.from.toString())
                 parameter("timeTo", it.to.toString())
             }
-        }.body()
+            parameter("page", page)
+            parameter("size", size)
+        }
+        val items: List<ProfessionalSummaryDto> = response.body()
+        // Sin la cabecera, se toma lo que ya llegó como todo lo que hay: así nunca se ofrece cargar
+        // una página vacía.
+        val total = response.headers[TOTAL_COUNT_HEADER]?.toIntOrNull() ?: (page * size + items.size)
+        return PagedResponse(items, total)
+    }
+
+    private companion object {
+        const val TOTAL_COUNT_HEADER = "X-Total-Count"
+    }
 }

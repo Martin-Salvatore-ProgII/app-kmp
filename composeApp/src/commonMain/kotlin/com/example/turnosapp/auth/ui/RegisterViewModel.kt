@@ -35,6 +35,8 @@ class RegisterViewModel(
             is RegisterAction.FieldChanged -> _state.update {
                 it.copy(form = it.form.with(action.field, action.value), fieldErrors = it.fieldErrors - action.field)
             }
+            RegisterAction.PasswordVisibilityToggled -> _state.update { it.copy(passwordVisible = !it.passwordVisible) }
+            RegisterAction.ImageUrlExpanded -> _state.update { it.copy(imageUrlExpanded = true) }
             RegisterAction.Submit -> register()
             RegisterAction.BackClicked -> viewModelScope.launch { _effects.send(RegisterEffect.NavigateBack) }
         }

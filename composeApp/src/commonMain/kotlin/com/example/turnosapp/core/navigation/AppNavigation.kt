@@ -121,7 +121,7 @@ fun AppNavigation(
                     onBack = { navController.popBackStack() },
                 )
             }
-            composable<Search> { SearchRoute() }
+            composable<Search> { SearchRoute(container = container) }
             composable<MyReservations> { MyReservationsRoute() }
             composable<Admin> { AdminRoute() }
         }

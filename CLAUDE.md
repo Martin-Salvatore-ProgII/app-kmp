@@ -16,6 +16,7 @@ La app Android del sistema de turnos, con Kotlin Multiplatform y Compose Multipl
 2. Cargar la skill `/mvvm-kmp` y seguirla. No reconstruir el patrón de memoria.
 3. **El alumno no conocía KMP al empezar y defiende el código en una evaluación oral.** Código simple y explícito antes que ingenioso: sin librerías ni mecanismos que no estén en ADR-0052, sin abstracciones de más. Al entregar cada issue, explicar qué hace cada pieza y por qué está en esa capa.
 4. Plantearle al alumno las decisiones abiertas de la issue, con una recomendación y su porqué, y esperar su respuesta.
+5. **Prototipo antes de cada pantalla nueva** (ADR-0050). Todas las pantallas van en un solo lienzo de diseño de Claude, con una fila por milestone: https://claude.ai/artifact/Rm6xZ6v8i8X7vSnUmhbiK6. Se agregan a ese lienzo, sin crear otro, y se leen antes de publicar, porque otro agente o el alumno pudo cambiarlo. Usan los colores del tema, componentes de Material 3 y datos del snapshot. La app es solo para el celular: pantallas espaciosas, elementos cómodos para el dedo, controles que se van sumando a medida que se eligen y nada técnico a la vista del usuario (ADR-0079). Con el ok del alumno, las pantallas se copian a `docs/arq/prototipo/` y recién ahí se codean.
 
 ## Dónde leer cada cosa (en el repo `docs`)
 
@@ -30,7 +31,7 @@ La app Android del sistema de turnos, con Kotlin Multiplatform y Compose Multipl
 | Stack y arquitectura | ADR-0048, ADR-0051, ADR-0052, ADR-0072, ADR-0074 |
 | Seguimiento de la reserva por polling | ADR-0021 |
 | Validación del teléfono | ADR-0027 |
-| Prototipos de las pantallas | ADR-0050 |
+| Prototipos de las pantallas | ADR-0050; copia aprobada en `arq/prototipo/` |
 | HTTPS, certificado local, URL y timeouts | ADR-0035, ADR-0073, ADR-0075; RNF-09 |
 | Qué milestone sigue | `trazabilidad.md` (filas de `app-kmp`) |
 | Flujo de Git | `guia-git.md` |

@@ -29,6 +29,10 @@ sealed interface SearchAction {
     data class EnabledSelected(val enabled: Boolean) : SearchAction
 
     data object Retry : SearchAction
+
+    /** Buscar se ve: se revisa si hay una reserva en curso. */
+    data object ScreenStarted : SearchAction
+    data object ActiveReservationClicked : SearchAction
     data object LoadMore : SearchAction
 
     data class ProfessionalClicked(val professionalId: Long) : SearchAction
@@ -37,4 +41,6 @@ sealed interface SearchAction {
 sealed interface SearchEffect {
     /** Abre Profesional con la fecha de la búsqueda, si había una, para ofrecerla primero (ADR-0079). */
     data class NavigateToProfessional(val professionalId: Long, val searchedDate: LocalDate?) : SearchEffect
+
+    data class NavigateToReservation(val reservationId: String) : SearchEffect
 }

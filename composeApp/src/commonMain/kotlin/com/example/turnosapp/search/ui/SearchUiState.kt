@@ -1,5 +1,6 @@
 package com.example.turnosapp.search.ui
 
+import com.example.turnosapp.reservation.domain.model.Reservation
 import com.example.turnosapp.search.domain.model.Category
 import com.example.turnosapp.search.domain.model.ProfessionalSummary
 import com.example.turnosapp.search.domain.model.SearchFilters
@@ -32,6 +33,8 @@ data class SearchUiState(
     val loadMoreErrorMessage: String? = null,
     val openSheet: SearchSheet? = null,
     val customRange: CustomRangeDraft = CustomRangeDraft(),
+    /** El proceso de reserva sin terminar del usuario, para ofrecer retomarlo (HU-07, ADR-0080). */
+    val activeReservation: Reservation? = null,
 ) {
     val canLoadMore: Boolean get() = professionals.size < totalCount
 }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.turnosapp.core.error.AppError
 import com.example.turnosapp.core.error.toUserMessage
+import com.example.turnosapp.reservation.data.ReservationRepository
 import com.example.turnosapp.search.data.SearchRepository
 import com.example.turnosapp.search.domain.model.SearchFilters
 import com.example.turnosapp.search.domain.model.TimeRange
@@ -34,6 +35,7 @@ internal const val NAME_DEBOUNCE_MILLIS = 300L
  */
 class SearchViewModel(
     private val repository: SearchRepository,
+    private val reservationRepository: ReservationRepository,
     today: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
 ) : ViewModel() {
 
@@ -91,6 +93,10 @@ class SearchViewModel(
             }
 
             SearchAction.Retry -> search()
+            SearchAction.ScreenStarted -> checkActiveReservation()
+            SearchAction.ActiveReservationClicked -> _state.value.activeReservation?.let {
+                viewModelScope.launch { _effects.send(SearchEffect.NavigateToReservation(it.id)) }
+            }
             SearchAction.LoadMore -> loadMore()
             is SearchAction.ProfessionalClicked -> viewModelScope.launch {
                 _effects.send(SearchEffect.NavigateToProfessional(action.professionalId, _state.value.filters.date))
@@ -213,6 +219,19 @@ class SearchViewModel(
             else -> {
                 closeSheet()
                 changeFilters { it.copy(timeRange = TimeRange(from, to)) }
+            }
+        }
+    }
+
+    /**
+     * Se revisa cada vez que Buscar se ve, así la tarjeta aparece al abrir la app y desaparece al
+     * volver de una reserva terminada (ADR-0080). Si turnos no responde, simplemente no se muestra:
+     * buscar no depende de turnos.
+     */
+    private fun checkActiveReservation() {
+        viewModelScope.launch {
+            reservationRepository.findActive().onSuccess { active ->
+                _state.update { it.copy(activeReservation = active) }
             }
         }
     }

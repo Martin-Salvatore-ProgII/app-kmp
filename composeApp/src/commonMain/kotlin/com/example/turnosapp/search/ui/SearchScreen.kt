@@ -21,9 +21,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -45,12 +48,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.turnosapp.core.di.AppContainer
 import com.example.turnosapp.core.ui.AppDatePickerDialog
 import com.example.turnosapp.core.ui.InitialsAvatar
+import com.example.turnosapp.core.ui.label
+import com.example.turnosapp.core.ui.longLabel
 import com.example.turnosapp.core.ui.shortLabel
+import com.example.turnosapp.reservation.domain.model.Reservation
 import com.example.turnosapp.search.domain.model.ProfessionalSummary
 import kotlinx.datetime.LocalDate
 
@@ -59,13 +66,19 @@ import kotlinx.datetime.LocalDate
 fun SearchRoute(
     container: AppContainer,
     onProfessionalClick: (professionalId: Long, searchedDate: LocalDate?) -> Unit,
-    viewModel: SearchViewModel = viewModel { SearchViewModel(container.searchRepository) },
+    onActiveReservationClick: (reservationId: String) -> Unit,
+    viewModel: SearchViewModel = viewModel { SearchViewModel(container.searchRepository, container.reservationRepository) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LifecycleStartEffect(viewModel) {
+        viewModel.onAction(SearchAction.ScreenStarted)
+        onStopOrDispose {}
+    }
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is SearchEffect.NavigateToProfessional -> onProfessionalClick(effect.professionalId, effect.searchedDate)
+                is SearchEffect.NavigateToReservation -> onActiveReservationClick(effect.reservationId)
             }
         }
     }
@@ -86,6 +99,9 @@ fun SearchScreen(
         return
     }
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+        state.activeReservation?.let {
+            ActiveReservationCard(it, onClick = { onAction(SearchAction.ActiveReservationClicked) }, modifier = Modifier.padding(bottom = 16.dp))
+        }
         NameField(name = state.filters.name, onAction = onAction)
         FilterChips(state = state, onAction = onAction, modifier = Modifier.padding(top = 16.dp))
         if (state.catalogSyncing) SyncingNotice(modifier = Modifier.padding(top = 16.dp))
@@ -105,6 +121,33 @@ fun SearchScreen(
         null -> Unit
     }
     CustomTimePicker(state, onAction)
+}
+
+/** "Tenés una reserva en curso": vuelve a Reserva en curso (HU-07, criterio 9; ADR-0080). */
+@Composable
+private fun ActiveReservationCard(reservation: Reservation, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        ),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(16.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(Icons.Filled.DateRange, contentDescription = null)
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Tenés una reserva en curso", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "${reservation.professionalFullName} · ${reservation.date.longLabel().replaceFirstChar { it.lowercase() }}, ${reservation.startTime.label()}",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+            Button(onClick = onClick, modifier = Modifier.align(Alignment.End).heightIn(min = 40.dp)) { Text("Continuar") }
+        }
+    }
 }
 
 @Composable

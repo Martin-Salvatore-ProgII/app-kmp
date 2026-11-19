@@ -1,5 +1,8 @@
 package com.example.turnosapp.search.ui
 
+import com.example.turnosapp.reservation.domain.model.ReservationStatus
+import com.example.turnosapp.reservation.ui.FakeReservationRepository
+import com.example.turnosapp.reservation.ui.reservation
 import com.example.turnosapp.core.error.AppError
 import com.example.turnosapp.search.domain.model.DayPeriod
 import com.example.turnosapp.search.domain.model.Page
@@ -42,7 +45,9 @@ class SearchViewModelTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun newViewModel() = SearchViewModel(repository, today)
+    private val reservations = FakeReservationRepository()
+
+    private fun newViewModel() = SearchViewModel(repository, reservations, today)
 
     @Test
     fun `al entrar busca sin filtros y carga las categorías`() = runTest {
@@ -280,5 +285,29 @@ class SearchViewModelTest {
     private fun pick(viewModel: SearchViewModel, field: TimeField, time: LocalTime) {
         viewModel.onAction(SearchAction.CustomTimeEditing(field))
         viewModel.onAction(SearchAction.CustomTimePicked(time))
+    }
+
+    @Test
+    fun `al verse Buscar ofrece retomar la reserva en curso`() = runTest {
+        reservations.activeResult = Result.success(reservation(ReservationStatus.AWAITING_PHONE, id = "activa"))
+        val viewModel = newViewModel()
+
+        viewModel.onAction(SearchAction.ScreenStarted)
+        assertEquals("activa", viewModel.state.value.activeReservation?.id)
+
+        viewModel.onAction(SearchAction.ActiveReservationClicked)
+        assertEquals(SearchEffect.NavigateToReservation("activa"), viewModel.effects.first())
+    }
+
+    @Test
+    fun `sin reserva en curso, o si terminó, no hay tarjeta`() {
+        reservations.activeResult = Result.success(reservation(ReservationStatus.AWAITING_PHONE))
+        val viewModel = newViewModel()
+        viewModel.onAction(SearchAction.ScreenStarted)
+
+        reservations.activeResult = Result.success(null)
+        viewModel.onAction(SearchAction.ScreenStarted)
+
+        assertEquals(null, viewModel.state.value.activeReservation)
     }
 }

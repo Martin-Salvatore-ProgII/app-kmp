@@ -38,7 +38,7 @@ data class Professional(
     val date: String? = null,
 )
 
-/** Turnos disponibles de un profesional en una fecha. Provisoria hasta la M4. */
+/** Turnos disponibles de un profesional en una fecha. */
 @Serializable
 data class Availability(
     val professionalId: Long,

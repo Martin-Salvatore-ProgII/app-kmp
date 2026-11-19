@@ -145,7 +145,12 @@ fun AppNavigation(
             }
             composable<Availability> { backStackEntry ->
                 val route = backStackEntry.toRoute<Availability>()
-                AvailabilityRoute(professionalId = route.professionalId, date = LocalDate.parse(route.date))
+                AvailabilityRoute(
+                    container = container,
+                    professionalId = route.professionalId,
+                    date = LocalDate.parse(route.date),
+                    onBack = { navController.popBackStack() },
+                )
             }
             composable<MyReservations> { MyReservationsRoute() }
             composable<Admin> { AdminRoute() }

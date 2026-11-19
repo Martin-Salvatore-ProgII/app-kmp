@@ -7,6 +7,11 @@ import com.example.turnosapp.core.error.AppError
 import com.example.turnosapp.professional.domain.model.ProfessionalAgenda
 import com.example.turnosapp.professional.domain.model.WeeklySchedule
 import com.example.turnosapp.professional.ui.FakeProfessionalRepository
+import com.example.turnosapp.reservation.domain.model.ReservationStatus
+import com.example.turnosapp.reservation.ui.FakeReservationRepository
+import com.example.turnosapp.reservation.ui.reservation
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -41,6 +46,7 @@ class AvailabilityViewModelTest {
     private val slots = listOf(Slot(LocalTime(18, 0), LocalTime(18, 30)), Slot(LocalTime(19, 30), LocalTime(20, 0)))
     private val availability = FakeAvailabilityRepository { date -> Result.success(availabilityOn(date, slots)) }
     private val professionals = FakeProfessionalRepository(Result.success(rivas))
+    private val reservations = FakeReservationRepository()
 
     private fun availabilityOn(date: LocalDate, slots: List<Slot>) = Availability(202, "Martin", "Rivas", date, slots)
 
@@ -51,7 +57,7 @@ class AvailabilityViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun newViewModel(date: LocalDate = thursday) =
-        AvailabilityViewModel(availability, professionals, FindAttendedDayUseCase(), 202, date, today)
+        AvailabilityViewModel(availability, professionals, reservations, FindAttendedDayUseCase(), 202, date, today)
 
     @Test
     fun `carga los turnos y las flechas van a los días en que atiende`() {
@@ -115,5 +121,53 @@ class AvailabilityViewModelTest {
 
         assertEquals(LocalDate(2026, 11, 27), state.nextDay)
         assertEquals(LocalDate(2026, 11, 25), state.previousDay)
+    }
+
+    @Test
+    fun `reservar el turno marcado lleva a la reserva en curso`() = runTest {
+        val viewModel = newViewModel()
+
+        viewModel.onAction(AvailabilityAction.SlotSelected(slots[1]))
+        viewModel.onAction(AvailabilityAction.ReserveClicked)
+
+        assertEquals(AvailabilityEffect.NavigateToReservation("5b1f0c2e-8d7a-4a51-9e0b-1f2d3c4b5a69"), viewModel.effects.first())
+    }
+
+    @Test
+    fun `sin un turno marcado no se reserva`() {
+        val viewModel = newViewModel()
+
+        viewModel.onAction(AvailabilityAction.ReserveClicked)
+
+        assertEquals(0, reservations.startCalls)
+    }
+
+    @Test
+    fun `un turno que ya tomó otro muestra el motivo y recarga los turnos`() {
+        reservations.startResult = Result.success(reservation(ReservationStatus.FAILED, failureReason = "SLOT_ALREADY_HELD"))
+        val viewModel = newViewModel()
+
+        viewModel.onAction(AvailabilityAction.SlotSelected(slots[1]))
+        viewModel.onAction(AvailabilityAction.ReserveClicked)
+
+        val state = viewModel.state.value
+        assertEquals("Alguien reservó ese horario hace un momento. Elegí otro.", state.rejectionMessage)
+        assertNull(state.selectedSlot)
+        assertEquals(listOf(thursday, thursday), availability.requestedDates)
+    }
+
+    @Test
+    fun `con una reserva en curso ofrece verla`() = runTest {
+        reservations.startResult = Result.failure(AppError.Business(409, "ACTIVE_RESERVATION_EXISTS"))
+        reservations.activeResult = Result.success(reservation(ReservationStatus.AWAITING_PHONE, id = "activa"))
+        val viewModel = newViewModel()
+
+        viewModel.onAction(AvailabilityAction.SlotSelected(slots[0]))
+        viewModel.onAction(AvailabilityAction.ReserveClicked)
+        assertTrue(viewModel.state.value.showActiveReservationDialog)
+
+        viewModel.onAction(AvailabilityAction.ViewActiveReservationClicked)
+
+        assertEquals(AvailabilityEffect.NavigateToReservation("activa"), viewModel.effects.first())
     }
 }

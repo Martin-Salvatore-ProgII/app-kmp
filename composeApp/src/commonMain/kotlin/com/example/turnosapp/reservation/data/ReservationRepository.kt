@@ -20,6 +20,12 @@ interface ReservationRepository {
      */
     suspend fun get(reservationId: String): Result<Reservation>
 
+    /**
+     * Envía el teléfono que pidió la cátedra. Turnos responde con el proceso en `PHONE_SUBMITTED`.
+     * `INVALID_PHONE_NUMBER` y `PHONE_NOT_REQUESTED` (el proceso ya no lo espera) llegan como `AppError.Business`.
+     */
+    suspend fun submitPhone(reservationId: String, phoneNumber: String): Result<Reservation>
+
     /** El proceso activo del usuario, o null si no tiene ninguno (ADR-0080). */
     suspend fun findActive(): Result<Reservation?>
 }

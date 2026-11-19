@@ -18,6 +18,9 @@ class ReservationRepositoryImpl(
             mapper.toDomain(api.start(StartReservationRequestDto(professionalId, date.toString(), startTime.toString())))
         }
 
+    override suspend fun get(reservationId: String): Result<Reservation> =
+        runCatchingApi { mapper.toDomain(api.get(reservationId)) }
+
     // Un usuario tiene a lo sumo un proceso activo, y mientras lo tiene no puede crear otro (ADR-0024):
     // si existe, es el último creado. Turnos ordena por fecha de creación, del más nuevo al más viejo.
     override suspend fun findActive(): Result<Reservation?> =

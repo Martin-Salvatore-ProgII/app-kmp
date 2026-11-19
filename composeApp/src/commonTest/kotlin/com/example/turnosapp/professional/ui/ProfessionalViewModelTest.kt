@@ -96,7 +96,3 @@ class ProfessionalViewModelTest {
         assertEquals(false, viewModel.state.value.isPickingDate)
     }
 }
-
-private class FakeProfessionalRepository(var result: Result<ProfessionalAgenda>) : ProfessionalRepository {
-    override suspend fun getAgenda(professionalId: Long): Result<ProfessionalAgenda> = result
-}

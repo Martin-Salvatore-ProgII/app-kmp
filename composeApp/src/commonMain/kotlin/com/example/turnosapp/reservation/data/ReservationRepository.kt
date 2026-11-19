@@ -14,6 +14,12 @@ interface ReservationRepository {
      */
     suspend fun start(professionalId: Long, date: LocalDate, startTime: LocalTime): Result<Reservation>
 
+    /**
+     * Un proceso propio, por su id. Es la operación que Reserva en curso consulta cada pocos segundos
+     * (ADR-0021). Uno inexistente o de otro usuario llega como `RESERVATION_NOT_FOUND`.
+     */
+    suspend fun get(reservationId: String): Result<Reservation>
+
     /** El proceso activo del usuario, o null si no tiene ninguno (ADR-0080). */
     suspend fun findActive(): Result<Reservation?>
 }

@@ -161,7 +161,24 @@ fun AppNavigation(
                 )
             }
             composable<Reservation> { backStackEntry ->
-                ReservationRoute(reservationId = backStackEntry.toRoute<Reservation>().reservationId)
+                ReservationRoute(
+                    container = container,
+                    reservationId = backStackEntry.toRoute<Reservation>().reservationId,
+                    onBack = { navController.popBackStack() },
+                    // Primero se descarta lo apilado sobre Buscar (Profesional y la reserva terminada), así
+                    // la barra inferior no lo guarda ni lo vuelve a mostrar al tocar Buscar.
+                    onMyReservations = {
+                        navController.popBackStack<Search>(inclusive = false)
+                        navController.navigateToTab(TopLevelDestination.MY_RESERVATIONS)
+                    },
+                    onSearch = { navController.popBackStack<Search>(inclusive = false) },
+                    onChooseAnotherSlot = { id, date ->
+                        // La reserva terminada sale de la pila: Atrás desde los turnos vuelve a Profesional.
+                        navController.navigate(Availability(id, date.toString())) {
+                            popUpTo<Reservation> { inclusive = true }
+                        }
+                    },
+                )
             }
             composable<MyReservations> { MyReservationsRoute() }
             composable<Admin> { AdminRoute() }

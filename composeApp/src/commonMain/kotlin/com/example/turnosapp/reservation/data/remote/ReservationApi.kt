@@ -23,6 +23,9 @@ class ReservationApi(
             setBody(request)
         }.body()
 
+    suspend fun get(reservationId: String): ReservationDto =
+        client.get("${urls.turnos}/api/reservations/$reservationId").body()
+
     /** La primera página de las reservas propias, con el orden por defecto: las más nuevas primero. */
     suspend fun listLatest(size: Int): List<ReservationDto> =
         client.get("${urls.turnos}/api/reservations") {

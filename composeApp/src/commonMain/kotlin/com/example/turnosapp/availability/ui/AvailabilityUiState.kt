@@ -12,6 +12,10 @@ import kotlinx.datetime.LocalDate
  * @param slots los turnos libres de [date], o null mientras no se cargaron.
  * @param isDateOutOfRange si turnos rechazó la fecha por estar fuera del horizonte.
  * @param isPickingDate si está abierto el calendario.
+ * @param selectedSlot el turno marcado, que "Reservar" va a tomar.
+ * @param isReserving si se está esperando la respuesta de iniciar la reserva: todo queda deshabilitado.
+ * @param rejectionMessage por qué no se pudo iniciar la reserva (por ejemplo, el turno ya lo tomó otro).
+ * @param showActiveReservationDialog si turnos respondió que ya hay una reserva en curso (ADR-0024).
  */
 data class AvailabilityUiState(
     val today: LocalDate,
@@ -26,4 +30,8 @@ data class AvailabilityUiState(
     val errorMessage: String? = null,
     val isDateOutOfRange: Boolean = false,
     val isPickingDate: Boolean = false,
+    val selectedSlot: Slot? = null,
+    val isReserving: Boolean = false,
+    val rejectionMessage: String? = null,
+    val showActiveReservationDialog: Boolean = false,
 )

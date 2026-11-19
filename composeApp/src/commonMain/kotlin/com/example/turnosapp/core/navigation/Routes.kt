@@ -44,3 +44,9 @@ data class Availability(
     val professionalId: Long,
     val date: String,
 )
+
+/** Reserva en curso: el seguimiento de un proceso de reserva, por su id local de turnos. */
+@Serializable
+data class Reservation(
+    val reservationId: String,
+)

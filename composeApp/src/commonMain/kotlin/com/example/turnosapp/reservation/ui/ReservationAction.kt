@@ -9,6 +9,8 @@ sealed interface ReservationAction {
     /** La pantalla dejó de verse (la app pasó a segundo plano): se pausa la consulta. */
     data object ScreenStopped : ReservationAction
 
+    data class PhoneChanged(val value: String) : ReservationAction
+    data object SubmitPhoneClicked : ReservationAction
     data object BackClicked : ReservationAction
     data object MyReservationsClicked : ReservationAction
     data object SearchClicked : ReservationAction

@@ -6,6 +6,7 @@ import com.example.turnosapp.core.error.AppError
 import com.example.turnosapp.core.error.reservationFailureMessage
 import com.example.turnosapp.core.error.toUserMessage
 import com.example.turnosapp.reservation.data.ReservationRepository
+import com.example.turnosapp.reservation.domain.ValidatePhoneUseCase
 import com.example.turnosapp.reservation.domain.model.Reservation
 import com.example.turnosapp.reservation.domain.model.ReservationStatus
 import kotlinx.coroutines.Job
@@ -38,6 +39,7 @@ private const val TICK_MILLIS = 1_000L
  */
 class ReservationViewModel(
     private val repository: ReservationRepository,
+    private val validatePhone: ValidatePhoneUseCase,
     private val reservationId: String,
     private val clock: Clock = Clock.System,
 ) : ViewModel() {
@@ -55,6 +57,8 @@ class ReservationViewModel(
         when (action) {
             ReservationAction.ScreenStarted -> startFollowing()
             ReservationAction.ScreenStopped -> stopFollowing()
+            is ReservationAction.PhoneChanged -> _state.update { it.copy(phone = action.value, phoneError = null) }
+            ReservationAction.SubmitPhoneClicked -> submitPhone()
             ReservationAction.BackClicked -> send(ReservationEffect.NavigateBack)
             ReservationAction.MyReservationsClicked -> send(ReservationEffect.NavigateToMyReservations)
             ReservationAction.SearchClicked -> send(ReservationEffect.NavigateToSearch)
@@ -84,6 +88,36 @@ class ReservationViewModel(
         tickJob?.cancel()
     }
 
+    /**
+     * Envía el teléfono solo si el proceso lo está pidiendo y queda tiempo: con la cuenta en cero la
+     * fase es TimeUp y no se envía (ADR-0080). Si igual sale justo en el límite, turnos lo rechaza o
+     * el proceso termina vencido, y la consulta siguiente lo muestra.
+     */
+    private fun submitPhone() {
+        val current = _state.value
+        if (current.phase != ReservationPhase.AwaitingPhone || current.isSubmittingPhone) return
+        if (!validatePhone(current.phone)) {
+            _state.update { it.copy(phoneError = INVALID_PHONE_MESSAGE) }
+            return
+        }
+        viewModelScope.launch {
+            _state.update { it.copy(isSubmittingPhone = true, phoneError = null) }
+            repository.submitPhone(reservationId, current.phone)
+                .onSuccess { reservation ->
+                    _state.update { it.copy(isSubmittingPhone = false, reservation = reservation).withTime() }
+                }
+                .onFailure { error ->
+                    val message = when {
+                        error is AppError.Business && error.code == INVALID_PHONE_NUMBER -> INVALID_PHONE_MESSAGE
+                        // El proceso ya no espera el teléfono (venció o cambió): la consulta muestra en qué quedó.
+                        error is AppError.Business && error.code == PHONE_NOT_REQUESTED -> null
+                        else -> error.toUserMessage()
+                    }
+                    _state.update { it.copy(isSubmittingPhone = false, phoneError = message) }
+                }
+        }
+    }
+
     /** Lee el proceso. Devuelve si hay que seguir consultando. */
     private suspend fun refresh(): Boolean {
         val result = repository.get(reservationId)
@@ -111,6 +145,8 @@ class ReservationViewModel(
             ?.takeUnless { reservation.status.isFinal }
             ?.let { (it - clock.now()).inWholeSeconds.coerceAtLeast(0) }
         return copy(
+            // Un rechazo vuelve a AWAITING_PHONE con su motivo (maquina-estados.md, regla 6); al enviar otro, se borra.
+            isPhoneRejected = reservation.status == ReservationStatus.AWAITING_PHONE && reservation.failureReason != null,
             remainingSeconds = remaining,
             totalSeconds = totalSeconds ?: remaining,
             phase = phaseOf(reservation, remaining),
@@ -121,6 +157,10 @@ class ReservationViewModel(
         viewModelScope.launch { _effects.send(effect) }
     }
 }
+
+private const val INVALID_PHONE_NUMBER = "INVALID_PHONE_NUMBER"
+private const val PHONE_NOT_REQUESTED = "PHONE_NOT_REQUESTED"
+private const val INVALID_PHONE_MESSAGE = "Tiene que tener entre 7 y 15 números. Puede empezar con +."
 
 /** El estado del proceso y el tiempo que queda, pasados a lo que muestra la pantalla (`maquina-estados.md`). */
 internal fun phaseOf(reservation: Reservation, remainingSeconds: Long?): ReservationPhase =

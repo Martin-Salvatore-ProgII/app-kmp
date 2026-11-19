@@ -1,6 +1,7 @@
 package com.example.turnosapp.professional.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
@@ -80,6 +82,8 @@ fun ProfessionalScreen(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
+            // El Scaffold de la navegación ya deja el lugar de la barra de estado: no se repite.
+            windowInsets = WindowInsets(0),
             title = {},
             navigationIcon = {
                 IconButton(onClick = { onAction(ProfessionalAction.BackClicked) }) {
@@ -193,9 +197,11 @@ private fun DayCard(date: LocalDate, isSearched: Boolean, onClick: () -> Unit, m
         ) {
             Text(date.dayOfWeek.label(), style = MaterialTheme.typography.bodyMedium)
             Text(date.dayMonthLabel(), style = MaterialTheme.typography.titleLarge)
+            // En la tarjeta del día buscado, el texto toma el color de la tarjeta; en las otras, el primario.
+            val linkColor = if (isSearched) LocalContentColor.current else MaterialTheme.colorScheme.primary
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(if (isSearched) "El día que buscaste" else "Ver turnos", style = MaterialTheme.typography.labelLarge)
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(if (isSearched) "El día que buscaste" else "Ver turnos", style = MaterialTheme.typography.labelLarge, color = linkColor)
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = linkColor, modifier = Modifier.size(18.dp))
             }
         }
     }

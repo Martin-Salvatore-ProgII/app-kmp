@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El dibujo del ícono: un calendario con un tilde, el mismo motivo del encabezado de Login.
+     Va dentro de la zona segura de 66 dp del centro, porque cada launcher recorta el ícono con su forma. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M38,37 H70 A4,4 0 0 1 74,41 V73 A4,4 0 0 1 70,77 H38 A4,4 0 0 1 34,73 V41 A4,4 0 0 1 38,37 Z M34,48 H74 M44,32 V41 M64,32 V41"
+        android:strokeColor="#006A6A"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M45,62 L51,68 L63,56"
+        android:strokeColor="#006A6A"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

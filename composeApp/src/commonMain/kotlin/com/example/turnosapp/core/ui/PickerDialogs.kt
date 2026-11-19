@@ -4,13 +4,17 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
@@ -50,7 +54,20 @@ fun AppDatePickerDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
     ) {
-        DatePicker(state = state)
+        // El título y la fecha elegida van en español, sin depender del idioma del teléfono. Sin el
+        // modo de escribir la fecha a mano: con el calendario alcanza y evita fechas mal escritas.
+        DatePicker(
+            state = state,
+            title = { Text("Elegí un día", modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp)) },
+            headline = {
+                Text(
+                    state.selectedDateMillis?.toPickerDate()?.longLabel() ?: "Sin elegir",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(start = 24.dp, end = 12.dp, bottom = 12.dp),
+                )
+            },
+            showModeToggle = false,
+        )
     }
 }
 

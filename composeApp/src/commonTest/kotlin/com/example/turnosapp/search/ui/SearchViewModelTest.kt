@@ -10,6 +10,7 @@ import com.example.turnosapp.search.ui.FakeSearchRepository.Companion.RIVAS
 import com.example.turnosapp.search.ui.FakeSearchRepository.Companion.TORRES
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
@@ -264,6 +265,16 @@ class SearchViewModelTest {
 
         assertFalse(viewModel.state.value.catalogNotReady)
         assertEquals(listOf(RIVAS), viewModel.state.value.professionals)
+    }
+
+    @Test
+    fun `tocar un profesional abre su pantalla con la fecha buscada`() = runTest {
+        val viewModel = newViewModel()
+        viewModel.onAction(SearchAction.DateSelected(thursday))
+
+        viewModel.onAction(SearchAction.ProfessionalClicked(202))
+
+        assertEquals(SearchEffect.NavigateToProfessional(202, thursday), viewModel.effects.first())
     }
 
     private fun pick(viewModel: SearchViewModel, field: TimeField, time: LocalTime) {

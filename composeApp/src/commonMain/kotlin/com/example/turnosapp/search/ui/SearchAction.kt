@@ -30,4 +30,11 @@ sealed interface SearchAction {
 
     data object Retry : SearchAction
     data object LoadMore : SearchAction
+
+    data class ProfessionalClicked(val professionalId: Long) : SearchAction
+}
+
+sealed interface SearchEffect {
+    /** Abre Profesional con la fecha de la búsqueda, si había una, para ofrecerla primero (ADR-0079). */
+    data class NavigateToProfessional(val professionalId: Long, val searchedDate: LocalDate?) : SearchEffect
 }

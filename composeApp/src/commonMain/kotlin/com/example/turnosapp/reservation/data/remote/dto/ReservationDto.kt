@@ -13,6 +13,11 @@ data class StartReservationRequestDto(
     val startTime: String,
 )
 
+@Serializable
+data class PhoneRequestDto(
+    val phoneNumber: String,
+)
+
 /** `expiresAt` es un instante ISO-8601 en UTC; las horas llegan como `18:00:00`. */
 @Serializable
 data class ReservationDto(

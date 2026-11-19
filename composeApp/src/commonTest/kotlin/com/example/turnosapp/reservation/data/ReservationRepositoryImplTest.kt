@@ -87,4 +87,15 @@ class ReservationRepositoryImplTest {
         assertNull(repositoryAnswering(HttpStatusCode.OK, "[]").findActive().getOrThrow())
         assertNull(repositoryAnswering(HttpStatusCode.OK, "[${reservationJson("CONFIRMED")}]").findActive().getOrThrow())
     }
+
+    @Test
+    fun `enviar el teléfono lo manda tal como se escribió`() = runTest {
+        val repository = repositoryAnswering(HttpStatusCode.Accepted, reservationJson("PHONE_SUBMITTED"))
+
+        val reservation = repository.submitPhone("5b1f", "+54 9 11 5555-1234").getOrThrow()
+
+        assertEquals("https://turnos/api/reservations/5b1f/phone", lastRequest!!.url.toString())
+        assertEquals("""{"phoneNumber":"+54 9 11 5555-1234"}""", (lastRequest!!.body as TextContent).text)
+        assertEquals(ReservationStatus.PHONE_SUBMITTED, reservation.status)
+    }
 }

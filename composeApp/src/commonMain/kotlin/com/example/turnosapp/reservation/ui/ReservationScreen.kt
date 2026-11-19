@@ -1,6 +1,11 @@
 package com.example.turnosapp.reservation.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -50,6 +55,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.turnosapp.core.di.AppContainer
 import com.example.turnosapp.core.ui.label
 import com.example.turnosapp.core.ui.longLabel
+import com.example.turnosapp.reservation.domain.ValidatePhoneUseCase
 import com.example.turnosapp.reservation.domain.model.Reservation
 import kotlinx.datetime.LocalDate
 
@@ -65,7 +71,7 @@ fun ReservationRoute(
     onMyReservations: () -> Unit,
     onSearch: () -> Unit,
     onChooseAnotherSlot: (professionalId: Long, date: LocalDate) -> Unit,
-    viewModel: ReservationViewModel = viewModel { ReservationViewModel(container.reservationRepository, reservationId) },
+    viewModel: ReservationViewModel = viewModel { ReservationViewModel(container.reservationRepository, ValidatePhoneUseCase(), reservationId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LifecycleStartEffect(viewModel) {
@@ -113,9 +119,10 @@ fun ReservationScreen(
                     modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
                 ) {
                     if (state.isConnectionLost) ConnectionNotice()
-                    if (phase.isFinal) FinalContent(phase, reservation) else InProgressContent(state, reservation)
+                    if (phase.isFinal) FinalContent(phase, reservation) else InProgressContent(state, reservation, onAction)
                 }
                 if (phase.isFinal) FinalButtons(phase, onAction)
+                if (phase == ReservationPhase.AwaitingPhone) SubmitPhoneButton(state, onAction)
             }
             error != null -> CenteredMessage(error) {
                 Button(onClick = { onAction(ReservationAction.SearchClicked) }) { Text("Volver a buscar") }
@@ -126,7 +133,7 @@ fun ReservationScreen(
 }
 
 @Composable
-private fun InProgressContent(state: ReservationUiState, reservation: Reservation) {
+private fun InProgressContent(state: ReservationUiState, reservation: Reservation, onAction: (ReservationAction) -> Unit) {
     Summary(reservation)
     Steps(state.phase.step)
     when (state.phase) {
@@ -135,8 +142,10 @@ private fun InProgressContent(state: ReservationUiState, reservation: Reservatio
             "Apartamos el horario para vos. En unos segundos te pedimos un dato para confirmar.",
         )
         ReservationPhase.AwaitingPhone -> {
+            if (state.isPhoneRejected) RejectionBanner("No se aceptó el teléfono. Revisalo y envialo de nuevo.")
             reservation.message?.let { CatedraMessage(it) }
             Countdown(state.remainingSeconds, state.totalSeconds)
+            PhoneField(state, onAction)
         }
         ReservationPhase.TimeUp -> {
             Countdown(0, state.totalSeconds)
@@ -247,6 +256,58 @@ private fun StepCircle(number: Int, done: Boolean, isCurrent: Boolean) {
         Box(contentAlignment = Alignment.Center) {
             if (done) Icon(Icons.Filled.Check, contentDescription = "Hecho", modifier = Modifier.size(14.dp))
             else Text("$number", style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+/** El campo del teléfono. Acepta espacios, guiones y paréntesis: la regla los quita antes de validar. */
+@Composable
+private fun PhoneField(state: ReservationUiState, onAction: (ReservationAction) -> Unit) {
+    val error = state.phoneError
+    OutlinedTextField(
+        value = state.phone,
+        onValueChange = { onAction(ReservationAction.PhoneChanged(it)) },
+        label = { Text("Teléfono") },
+        singleLine = true,
+        isError = error != null,
+        enabled = !state.isSubmittingPhone,
+        supportingText = { Text(error ?: "Podés escribirlo con espacios, guiones o paréntesis.") },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Send),
+        keyboardActions = KeyboardActions(onSend = { onAction(ReservationAction.SubmitPhoneClicked) }),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/** "Enviar teléfono", o "Enviar de nuevo" después de un rechazo; mientras se envía, "Enviando…". */
+@Composable
+private fun SubmitPhoneButton(state: ReservationUiState, onAction: (ReservationAction) -> Unit) {
+    Button(
+        onClick = { onAction(ReservationAction.SubmitPhoneClicked) },
+        enabled = !state.isSubmittingPhone,
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp).heightIn(min = 48.dp),
+    ) {
+        if (state.isSubmittingPhone) {
+            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+            Text("Enviando…", modifier = Modifier.padding(start = 12.dp))
+        } else {
+            Text(if (state.isPhoneRejected) "Enviar de nuevo" else "Enviar teléfono")
+        }
+    }
+}
+
+/** El motivo propio de un rechazo del teléfono, arriba del mensaje de la cátedra. */
+@Composable
+private fun RejectionBanner(message: String) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(16.dp)) {
+            Icon(Icons.Filled.Warning, contentDescription = null, modifier = Modifier.size(20.dp))
+            Text(message, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

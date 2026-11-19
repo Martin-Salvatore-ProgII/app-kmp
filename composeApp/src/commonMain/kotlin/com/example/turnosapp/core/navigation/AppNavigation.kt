@@ -34,6 +34,7 @@ import com.example.turnosapp.auth.ui.SessionViewModel
 import com.example.turnosapp.core.di.AppContainer
 import com.example.turnosapp.myreservations.ui.MyReservationsRoute
 import com.example.turnosapp.professional.ui.ProfessionalRoute
+import com.example.turnosapp.reservation.ui.ReservationRoute
 import com.example.turnosapp.search.ui.SearchRoute
 import kotlinx.datetime.LocalDate
 
@@ -150,7 +151,17 @@ fun AppNavigation(
                     professionalId = route.professionalId,
                     date = LocalDate.parse(route.date),
                     onBack = { navController.popBackStack() },
+                    onReservationStarted = { id ->
+                        // Turnos disponibles sale de la pila: su lista ya no está al día (ADR-0080).
+                        // Atrás desde la reserva vuelve a Profesional.
+                        navController.navigate(Reservation(id)) {
+                            popUpTo<Availability> { inclusive = true }
+                        }
+                    },
                 )
+            }
+            composable<Reservation> { backStackEntry ->
+                ReservationRoute(reservationId = backStackEntry.toRoute<Reservation>().reservationId)
             }
             composable<MyReservations> { MyReservationsRoute() }
             composable<Admin> { AdminRoute() }

@@ -43,3 +43,23 @@ private val businessMessages = mapOf(
     "PHONE_NOT_REQUESTED" to "La reserva no está esperando un teléfono.",
     "RESERVATION_NOT_CANCELLABLE" to "Esta reserva ya no se puede cancelar.",
 )
+
+/**
+ * El mensaje de un proceso de reserva que terminó sin reservar (`FAILED` o `INVALID`), elegido por
+ * su `failureReason` (tabla de ADR-0080). El código nunca se muestra.
+ */
+fun reservationFailureMessage(failureReason: String?): String =
+    failureMessages[failureReason] ?: "No se pudo completar la reserva. Probá de nuevo."
+
+private const val INTEGRATION_FAILURE_MESSAGE = "No pudimos reservar en este momento. Probá de nuevo en unos minutos."
+
+private val failureMessages = mapOf(
+    "SLOT_ALREADY_HELD" to "Alguien reservó ese horario hace un momento. Elegí otro.",
+    "SLOT_ALREADY_RESERVED" to "Alguien reservó ese horario hace un momento. Elegí otro.",
+    "INVALID_SLOT" to "Ese horario ya no está disponible. Elegí otro.",
+    "PROFESSIONAL_DISABLED" to "El profesional ya no recibe reservas.",
+    "PROFESSIONAL_NOT_FOUND" to "No se encontró el profesional.",
+    // Turnos no llegó a la cátedra o no tuvo respuesta: se puede volver a intentar (ADR-0069).
+    "INTEGRATION_TIMEOUT" to INTEGRATION_FAILURE_MESSAGE,
+    "INTEGRATION_UNAVAILABLE" to INTEGRATION_FAILURE_MESSAGE,
+)

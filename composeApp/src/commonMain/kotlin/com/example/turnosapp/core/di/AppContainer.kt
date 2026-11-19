@@ -17,6 +17,10 @@ import com.example.turnosapp.professional.data.ProfessionalRepository
 import com.example.turnosapp.professional.data.ProfessionalRepositoryImpl
 import com.example.turnosapp.professional.data.mapper.ProfessionalMapper
 import com.example.turnosapp.professional.data.remote.ProfessionalApi
+import com.example.turnosapp.reservation.data.ReservationRepository
+import com.example.turnosapp.reservation.data.ReservationRepositoryImpl
+import com.example.turnosapp.reservation.data.mapper.ReservationMapper
+import com.example.turnosapp.reservation.data.remote.ReservationApi
 import com.example.turnosapp.search.data.SearchRepository
 import com.example.turnosapp.search.data.SearchRepositoryImpl
 import com.example.turnosapp.search.data.mapper.SearchMapper
@@ -53,4 +57,7 @@ class AppContainer(
 
     val availabilityRepository: AvailabilityRepository =
         AvailabilityRepositoryImpl(AvailabilityApi(httpClient, urls), AvailabilityMapper())
+
+    val reservationRepository: ReservationRepository =
+        ReservationRepositoryImpl(ReservationApi(httpClient, urls), ReservationMapper())
 }

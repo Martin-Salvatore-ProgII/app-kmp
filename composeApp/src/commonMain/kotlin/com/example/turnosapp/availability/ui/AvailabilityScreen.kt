@@ -21,6 +21,11 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -57,10 +62,12 @@ fun AvailabilityRoute(
     professionalId: Long,
     date: LocalDate,
     onBack: () -> Unit,
+    onReservationStarted: (reservationId: String) -> Unit,
     viewModel: AvailabilityViewModel = viewModel {
         AvailabilityViewModel(
             container.availabilityRepository,
             container.professionalRepository,
+            container.reservationRepository,
             FindAttendedDayUseCase(),
             professionalId,
             date,
@@ -72,6 +79,7 @@ fun AvailabilityRoute(
         viewModel.effects.collect { effect ->
             when (effect) {
                 AvailabilityEffect.NavigateBack -> onBack()
+                is AvailabilityEffect.NavigateToReservation -> onReservationStarted(effect.reservationId)
             }
         }
     }
@@ -100,6 +108,7 @@ fun AvailabilityScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp),
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
         ) {
+            state.rejectionMessage?.let { RejectionBanner(it) }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(state.professionalName.orEmpty(), style = MaterialTheme.typography.titleLarge)
                 state.categoryName?.let {
@@ -109,6 +118,21 @@ fun AvailabilityScreen(
             DayBar(state, onAction)
             DayContent(state, onAction)
         }
+        if (!state.slots.isNullOrEmpty()) ReserveButton(state, onAction)
+    }
+
+    if (state.showActiveReservationDialog) {
+        AlertDialog(
+            onDismissRequest = { onAction(AvailabilityAction.ActiveReservationDialogDismissed) },
+            title = { Text("Ya tenés una reserva en curso") },
+            text = { Text("Terminala o esperá a que venza para reservar otro turno.") },
+            confirmButton = {
+                Button(onClick = { onAction(AvailabilityAction.ViewActiveReservationClicked) }) { Text("Ver reserva en curso") }
+            },
+            dismissButton = {
+                TextButton(onClick = { onAction(AvailabilityAction.ActiveReservationDialogDismissed) }) { Text("Cerrar") }
+            },
+        )
     }
 
     if (state.isPickingDate) {
@@ -177,12 +201,12 @@ private fun DayContent(state: AvailabilityUiState, onAction: (AvailabilityAction
             buttonText = "Ver ${state.nextDay.longLabel().replaceFirstChar { it.lowercase() }}",
             onClick = { onAction(AvailabilityAction.NextDayClicked) },
         )
-        else -> SlotGrid(slots)
+        else -> SlotGrid(slots, state, onAction)
     }
 }
 
 @Composable
-private fun SlotGrid(slots: List<Slot>) {
+private fun SlotGrid(slots: List<Slot>, state: AvailabilityUiState, onAction: (AvailabilityAction) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         val count = if (slots.size == 1) "1 turno libre" else "${slots.size} turnos libres"
         Text(
@@ -194,7 +218,13 @@ private fun SlotGrid(slots: List<Slot>) {
         slots.chunked(SLOTS_PER_ROW).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 row.forEach { slot ->
-                    SlotBox(slot, Modifier.weight(1f))
+                    SlotButton(
+                        slot = slot,
+                        isSelected = slot == state.selectedSlot,
+                        enabled = !state.isReserving,
+                        onClick = { onAction(AvailabilityAction.SlotSelected(slot)) },
+                        modifier = Modifier.weight(1f),
+                    )
                 }
                 repeat(SLOTS_PER_ROW - row.size) { Spacer(Modifier.weight(1f)) }
             }
@@ -208,11 +238,57 @@ private fun SlotGrid(slots: List<Slot>) {
     }
 }
 
+/** Un turno libre. Tocarlo lo marca; el botón de abajo lo reserva (ADR-0080). */
 @Composable
-private fun SlotBox(slot: Slot, modifier: Modifier = Modifier) {
-    OutlinedCard(shape = RoundedCornerShape(12.dp), modifier = modifier) {
-        Box(Modifier.fillMaxWidth().heightIn(min = 48.dp), contentAlignment = Alignment.Center) {
-            Text(slot.startTime.label(), style = MaterialTheme.typography.titleMedium)
+private fun SlotButton(slot: Slot, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(12.dp)
+    val content: @Composable () -> Unit = { Text(slot.startTime.label(), style = MaterialTheme.typography.titleMedium) }
+    if (isSelected) {
+        Button(onClick = onClick, enabled = enabled, shape = shape, modifier = modifier.heightIn(min = 48.dp)) { content() }
+    } else {
+        OutlinedButton(
+            onClick = onClick,
+            enabled = enabled,
+            shape = shape,
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+            modifier = modifier.heightIn(min = 48.dp),
+        ) { content() }
+    }
+}
+
+/** "Reservar 19:30" con un turno marcado; mientras se espera la respuesta, "Reservando…". */
+@Composable
+private fun ReserveButton(state: AvailabilityUiState, onAction: (AvailabilityAction) -> Unit) {
+    val slot = state.selectedSlot
+    Button(
+        onClick = { onAction(AvailabilityAction.ReserveClicked) },
+        enabled = slot != null && !state.isReserving,
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp).heightIn(min = 48.dp),
+    ) {
+        when {
+            state.isReserving -> {
+                CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                Text("Reservando…", modifier = Modifier.padding(start = 12.dp))
+            }
+            slot != null -> Text("Reservar ${slot.startTime.label()}")
+            else -> Text("Elegí un horario")
+        }
+    }
+}
+
+/** Por qué no se pudo iniciar la reserva, arriba de la pantalla. */
+@Composable
+private fun RejectionBanner(message: String) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(16.dp)) {
+            Icon(Icons.Filled.Warning, contentDescription = null, modifier = Modifier.size(20.dp))
+            Text(message, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

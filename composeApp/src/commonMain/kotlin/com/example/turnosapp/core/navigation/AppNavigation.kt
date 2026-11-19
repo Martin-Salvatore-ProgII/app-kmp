@@ -132,6 +132,7 @@ fun AppNavigation(
                 SearchRoute(
                     container = container,
                     onProfessionalClick = { id, date -> navController.navigate(Professional(id, date?.toString())) },
+                    onActiveReservationClick = { id -> navController.navigate(Reservation(id)) },
                 )
             }
             composable<Professional> { backStackEntry ->

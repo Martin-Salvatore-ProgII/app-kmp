@@ -14,6 +14,7 @@ class FakeSearchRepository(
     var categoriesResult: Result<List<Category>> = Result.success(listOf(CARDIOLOGY)),
     var searchResult: Result<Page<ProfessionalSummary>> = Result.success(Page(listOf(RIVAS), totalCount = 1)),
     var nextPageResult: Result<Page<ProfessionalSummary>> = Result.success(Page(emptyList(), totalCount = 1)),
+    var syncingResult: Result<Boolean> = Result.success(false),
 ) : SearchRepository {
 
     /** Los filtros de cada búsqueda, en orden. */
@@ -29,6 +30,8 @@ class FakeSearchRepository(
         pages += page
         return if (page == 0) searchResult else nextPageResult
     }
+
+    override suspend fun isCatalogSyncing(): Result<Boolean> = syncingResult
 
     companion object {
         val CARDIOLOGY = Category(1, "Cardiologia")

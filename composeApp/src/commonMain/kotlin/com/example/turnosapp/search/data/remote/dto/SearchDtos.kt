@@ -26,3 +26,9 @@ data class CategoryRefDto(
     val id: Long,
     val name: String,
 )
+
+/** `GET /api/catalog/sync-status`. La app solo usa si hay una sincronización en curso (ADR-0079). */
+@Serializable
+data class SyncStatusDto(
+    val syncInProgress: Boolean,
+)

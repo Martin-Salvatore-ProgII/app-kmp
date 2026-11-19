@@ -14,6 +14,7 @@ fun AppError.toUserMessage(): String =
         is AppError.Validation -> "Revisá los datos marcados."
         is AppError.Business -> businessMessages[code] ?: UNKNOWN_MESSAGE
         AppError.Unavailable -> "El servicio no está disponible en este momento. Probá de nuevo en unos minutos."
+        AppError.CatalogNotReady -> "El catálogo todavía se está cargando. Probá de nuevo en unos segundos."
         AppError.Network -> "No se pudo conectar con el servidor. Revisá tu conexión y probá de nuevo."
         AppError.Unknown -> UNKNOWN_MESSAGE
     }
@@ -27,7 +28,7 @@ fun Throwable.toUserMessage(): String = (this as? AppError)?.toUserMessage() ?: 
 private const val UNKNOWN_MESSAGE = "Ocurrió un error inesperado. Probá de nuevo."
 
 // Los códigos de `docs/arq/contratos.md` (Códigos de error propios). Los 503 no están porque se
-// muestran todos igual, como Unavailable.
+// muestran como Unavailable, salvo CATALOG_NOT_READY, que tiene su propio AppError.
 private val businessMessages = mapOf(
     "VALIDATION_ERROR" to "Hay datos inválidos. Revisá el formulario.",
     "USERNAME_ALREADY_EXISTS" to "Ese nombre de usuario ya está en uso.",

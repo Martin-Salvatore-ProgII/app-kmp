@@ -19,4 +19,7 @@ interface SearchRepository {
      * @param page la página, desde 0.
      */
     suspend fun search(filters: SearchFilters, page: Int): Result<Page<ProfessionalSummary>>
+
+    /** Si el catálogo está aplicando una sincronización; mientras tanto se busca sobre la copia anterior (ADR-0010). */
+    suspend fun isCatalogSyncing(): Result<Boolean>
 }

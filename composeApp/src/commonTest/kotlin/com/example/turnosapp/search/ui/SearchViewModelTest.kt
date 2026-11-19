@@ -231,6 +231,41 @@ class SearchViewModelTest {
         assertEquals(listOf(RIVAS), viewModel.state.value.professionals)
     }
 
+    @Test
+    fun `con una sincronización en curso busca igual y muestra el aviso`() = runTest {
+        repository.syncingResult = Result.success(true)
+
+        val viewModel = newViewModel()
+
+        assertTrue(viewModel.state.value.catalogSyncing)
+        assertEquals(listOf(RIVAS), viewModel.state.value.professionals)
+    }
+
+    @Test
+    fun `si el estado del catálogo no responde, no hay aviso y la búsqueda sigue`() = runTest {
+        repository.syncingResult = Result.failure(AppError.Network)
+
+        val viewModel = newViewModel()
+
+        assertFalse(viewModel.state.value.catalogSyncing)
+        assertNull(viewModel.state.value.errorMessage)
+    }
+
+    @Test
+    fun `sin la primera copia del catálogo se muestra la espera, no un error`() = runTest {
+        repository.searchResult = Result.failure(AppError.CatalogNotReady)
+        val viewModel = newViewModel()
+
+        assertTrue(viewModel.state.value.catalogNotReady)
+        assertNull(viewModel.state.value.errorMessage)
+
+        repository.searchResult = Result.success(Page(listOf(RIVAS), totalCount = 1))
+        viewModel.onAction(SearchAction.Retry)
+
+        assertFalse(viewModel.state.value.catalogNotReady)
+        assertEquals(listOf(RIVAS), viewModel.state.value.professionals)
+    }
+
     private fun pick(viewModel: SearchViewModel, field: TimeField, time: LocalTime) {
         viewModel.onAction(SearchAction.CustomTimeEditing(field))
         viewModel.onAction(SearchAction.CustomTimePicked(time))

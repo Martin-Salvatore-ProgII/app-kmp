@@ -3,6 +3,7 @@ package com.example.turnosapp.search.data.remote
 import com.example.turnosapp.core.network.ServiceUrls
 import com.example.turnosapp.search.data.remote.dto.CategoryDto
 import com.example.turnosapp.search.data.remote.dto.ProfessionalSummaryDto
+import com.example.turnosapp.search.data.remote.dto.SyncStatusDto
 import com.example.turnosapp.search.domain.model.SearchFilters
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -44,6 +45,10 @@ class SearchApi(
         val total = response.headers[TOTAL_COUNT_HEADER]?.toIntOrNull() ?: (page * size + items.size)
         return PagedResponse(items, total)
     }
+
+    /** Responde siempre, aunque el catálogo no esté listo: es donde se ve su estado. */
+    suspend fun getSyncStatus(): SyncStatusDto =
+        client.get("${urls.catalog}/api/catalog/sync-status").body()
 
     private companion object {
         const val TOTAL_COUNT_HEADER = "X-Total-Count"

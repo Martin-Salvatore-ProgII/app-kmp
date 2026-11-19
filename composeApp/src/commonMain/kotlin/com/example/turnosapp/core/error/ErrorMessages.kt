@@ -18,6 +18,12 @@ fun AppError.toUserMessage(): String =
         AppError.Unknown -> UNKNOWN_MESSAGE
     }
 
+/**
+ * Para el fallo de un `Result`, que llega como Throwable. Los repositorios devuelven siempre un
+ * AppError; cualquier otra cosa se muestra como error inesperado.
+ */
+fun Throwable.toUserMessage(): String = (this as? AppError)?.toUserMessage() ?: UNKNOWN_MESSAGE
+
 private const val UNKNOWN_MESSAGE = "Ocurrió un error inesperado. Probá de nuevo."
 
 // Los códigos de `docs/arq/contratos.md` (Códigos de error propios). Los 503 no están porque se

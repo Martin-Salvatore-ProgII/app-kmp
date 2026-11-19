@@ -1,5 +1,6 @@
 package com.example.turnosapp.core.network
 
+import com.example.turnosapp.core.session.SessionRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.HttpTimeout
@@ -21,8 +22,9 @@ internal val appJson = Json {
  *
  * El motor llega de afuera (lo crea androidApp con OkHttp) para que la confianza en el
  * certificado local la resuelva la configuración de red de Android (ADR-0075).
+ * La sesión le da el JWT de cada pedido y se entera de los 401 ([sessionPlugin]).
  */
-fun createHttpClient(engine: HttpClientEngine): HttpClient =
+fun createHttpClient(engine: HttpClientEngine, sessionRepository: SessionRepository): HttpClient =
     HttpClient(engine) {
         // Una respuesta 4xx o 5xx se lanza como excepción, y runCatchingApi la traduce a AppError.
         expectSuccess = true
@@ -30,6 +32,7 @@ fun createHttpClient(engine: HttpClientEngine): HttpClient =
         install(ContentNegotiation) {
             json(appJson)
         }
+        install(sessionPlugin(sessionRepository))
         install(HttpTimeout) {
             connectTimeoutMillis = CONNECT_TIMEOUT_MILLIS
             requestTimeoutMillis = REQUEST_TIMEOUT_MILLIS

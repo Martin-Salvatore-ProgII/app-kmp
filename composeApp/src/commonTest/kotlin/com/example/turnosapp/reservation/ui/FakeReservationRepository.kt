@@ -12,10 +12,17 @@ open class FakeReservationRepository : ReservationRepository {
     var startResult: Result<Reservation> = Result.success(reservation(ReservationStatus.AWAITING_REQUEST))
     var activeResult: Result<Reservation?> = Result.success(null)
     var startCalls = 0
+    var getResult: Result<Reservation> = Result.success(reservation(ReservationStatus.AWAITING_REQUEST))
+    var getCalls = 0
 
     override suspend fun start(professionalId: Long, date: LocalDate, startTime: LocalTime): Result<Reservation> {
         startCalls++
         return startResult
+    }
+
+    override suspend fun get(reservationId: String): Result<Reservation> {
+        getCalls++
+        return getResult
     }
 
     override suspend fun findActive(): Result<Reservation?> = activeResult

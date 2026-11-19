@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- secondaryContainer del tema de la app (core/ui/theme), el fondo del encabezado de Login. -->
+    <color name="ic_launcher_background">#CCE8E7</color>
+</resources>

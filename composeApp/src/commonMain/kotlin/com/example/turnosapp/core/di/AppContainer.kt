@@ -9,6 +9,14 @@ import com.example.turnosapp.core.network.createHttpClient
 import com.example.turnosapp.core.session.SessionRepository
 import com.example.turnosapp.core.session.SessionRepositoryImpl
 import com.example.turnosapp.core.session.TokenStorage
+import com.example.turnosapp.professional.data.ProfessionalRepository
+import com.example.turnosapp.professional.data.ProfessionalRepositoryImpl
+import com.example.turnosapp.professional.data.mapper.ProfessionalMapper
+import com.example.turnosapp.professional.data.remote.ProfessionalApi
+import com.example.turnosapp.search.data.SearchRepository
+import com.example.turnosapp.search.data.SearchRepositoryImpl
+import com.example.turnosapp.search.data.mapper.SearchMapper
+import com.example.turnosapp.search.data.remote.SearchApi
 import io.ktor.client.engine.HttpClientEngine
 
 /**
@@ -33,4 +41,9 @@ class AppContainer(
     private val httpClient = createHttpClient(httpEngine, sessionRepository)
 
     val authRepository: AuthRepository = AuthRepositoryImpl(AuthApi(httpClient, urls), sessionRepository, RegistrationMapper())
+
+    val searchRepository: SearchRepository = SearchRepositoryImpl(SearchApi(httpClient, urls), SearchMapper())
+
+    val professionalRepository: ProfessionalRepository =
+        ProfessionalRepositoryImpl(ProfessionalApi(httpClient, urls), ProfessionalMapper())
 }

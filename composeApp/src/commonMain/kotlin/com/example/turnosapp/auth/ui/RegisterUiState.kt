@@ -16,4 +16,11 @@ data class RegisterUiState(
     val fieldErrors: Map<RegistrationField, String> = emptyMap(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-)
+    val passwordVisible: Boolean = false,
+    /** La foto es opcional: su campo queda oculto hasta que el usuario lo pide (ADR-0079). */
+    val imageUrlExpanded: Boolean = false,
+) {
+    /** Se ve si se pidió, si ya tiene algo escrito o si el backend lo marcó con un error. */
+    val showImageUrl: Boolean
+        get() = imageUrlExpanded || form.imageUrl.isNotEmpty() || RegistrationField.IMAGE_URL in fieldErrors
+}

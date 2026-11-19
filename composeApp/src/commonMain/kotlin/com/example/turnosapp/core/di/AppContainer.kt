@@ -1,6 +1,10 @@
 package com.example.turnosapp.core.di
 
 import com.example.turnosapp.auth.data.AuthRepository
+import com.example.turnosapp.availability.data.AvailabilityRepository
+import com.example.turnosapp.availability.data.AvailabilityRepositoryImpl
+import com.example.turnosapp.availability.data.mapper.AvailabilityMapper
+import com.example.turnosapp.availability.data.remote.AvailabilityApi
 import com.example.turnosapp.auth.data.AuthRepositoryImpl
 import com.example.turnosapp.auth.data.mapper.RegistrationMapper
 import com.example.turnosapp.auth.data.remote.AuthApi
@@ -46,4 +50,7 @@ class AppContainer(
 
     val professionalRepository: ProfessionalRepository =
         ProfessionalRepositoryImpl(ProfessionalApi(httpClient, urls), ProfessionalMapper())
+
+    val availabilityRepository: AvailabilityRepository =
+        AvailabilityRepositoryImpl(AvailabilityApi(httpClient, urls), AvailabilityMapper())
 }

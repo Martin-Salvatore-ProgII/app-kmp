@@ -1,16 +1,23 @@
 package com.example.turnosapp.search.ui
 
+import com.example.turnosapp.core.error.AppError
+import com.example.turnosapp.core.model.Page
 import com.example.turnosapp.reservation.domain.model.ReservationStatus
 import com.example.turnosapp.reservation.ui.FakeReservationRepository
 import com.example.turnosapp.reservation.ui.reservation
-import com.example.turnosapp.core.error.AppError
 import com.example.turnosapp.search.domain.model.DayPeriod
-import com.example.turnosapp.search.domain.model.Page
 import com.example.turnosapp.search.domain.model.SearchFilters
 import com.example.turnosapp.search.domain.model.TimeRange
 import com.example.turnosapp.search.ui.FakeSearchRepository.Companion.CARDIOLOGY
 import com.example.turnosapp.search.ui.FakeSearchRepository.Companion.RIVAS
 import com.example.turnosapp.search.ui.FakeSearchRepository.Companion.TORRES
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -22,13 +29,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 // runTest usa el reloj virtual del dispatcher de prueba que reemplaza a Main: la espera del nombre
 // se avanza con advanceTimeBy, sin esperar de verdad.

@@ -32,17 +32,25 @@ class SessionRepositoryImpl(
     private val _isLoggedIn = MutableStateFlow(token != null)
     override val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
+    // Se calcula al abrir, guardar y borrar la sesión: son los únicos momentos en que cambia el token.
+    private val _isAdmin = MutableStateFlow(token.hasAdminRole())
+    override val isAdmin: StateFlow<Boolean> = _isAdmin.asStateFlow()
+
     override fun currentToken(): String? = token
 
     override fun saveToken(token: String) {
         tokenStorage.save(token)
         this.token = token
+        _isAdmin.value = token.hasAdminRole()
         _isLoggedIn.value = true
     }
 
     override fun clear() {
         tokenStorage.clear()
         token = null
+        _isAdmin.value = false
         _isLoggedIn.value = false
     }
+
+    private fun String?.hasAdminRole(): Boolean = this != null && ROLE_ADMIN in readJwtRoles(this)
 }

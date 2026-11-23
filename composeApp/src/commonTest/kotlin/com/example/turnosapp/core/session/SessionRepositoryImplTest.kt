@@ -57,4 +57,27 @@ class SessionRepositoryImplTest {
         assertFalse(repository.isLoggedIn.value)
         assertNull(storage.stored)
     }
+
+    @Test
+    fun `es administrador solo si el JWT trae ROLE_ADMIN`() {
+        val admin = jwtExpiringAt(now + 60, roles = listOf("ROLE_USER", "ROLE_ADMIN"))
+        val user = jwtExpiringAt(now + 60)
+
+        assertTrue(SessionRepositoryImpl(InMemoryTokenStorage(admin)) { now }.isAdmin.value)
+        assertFalse(SessionRepositoryImpl(InMemoryTokenStorage(user)) { now }.isAdmin.value)
+    }
+
+    @Test
+    fun `el rol se actualiza al iniciar y al cerrar la sesión`() {
+        val repository = SessionRepositoryImpl(InMemoryTokenStorage()) { now }
+
+        repository.saveToken(jwtExpiringAt(now + 60, roles = listOf("ROLE_ADMIN")))
+        assertTrue(repository.isAdmin.value)
+
+        repository.clear()
+        assertFalse(repository.isAdmin.value)
+
+        repository.saveToken(jwtExpiringAt(now + 60))
+        assertFalse(repository.isAdmin.value)
+    }
 }

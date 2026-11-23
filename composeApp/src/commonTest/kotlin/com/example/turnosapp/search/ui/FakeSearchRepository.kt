@@ -1,8 +1,8 @@
 package com.example.turnosapp.search.ui
 
+import com.example.turnosapp.core.model.Page
 import com.example.turnosapp.search.data.SearchRepository
 import com.example.turnosapp.search.domain.model.Category
-import com.example.turnosapp.search.domain.model.Page
 import com.example.turnosapp.search.domain.model.ProfessionalSummary
 import com.example.turnosapp.search.domain.model.SearchFilters
 

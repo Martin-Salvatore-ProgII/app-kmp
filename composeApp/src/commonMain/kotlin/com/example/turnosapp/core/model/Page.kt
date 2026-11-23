@@ -1,4 +1,4 @@
-package com.example.turnosapp.search.domain.model
+package com.example.turnosapp.core.model
 
 /**
  * Una página de resultados y el total que informa el backend en `X-Total-Count`

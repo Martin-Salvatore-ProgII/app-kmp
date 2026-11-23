@@ -1,10 +1,10 @@
 package com.example.turnosapp.search.data
 
+import com.example.turnosapp.core.model.Page
 import com.example.turnosapp.core.network.runCatchingApi
 import com.example.turnosapp.search.data.mapper.SearchMapper
 import com.example.turnosapp.search.data.remote.SearchApi
 import com.example.turnosapp.search.domain.model.Category
-import com.example.turnosapp.search.domain.model.Page
 import com.example.turnosapp.search.domain.model.ProfessionalSummary
 import com.example.turnosapp.search.domain.model.SearchFilters
 

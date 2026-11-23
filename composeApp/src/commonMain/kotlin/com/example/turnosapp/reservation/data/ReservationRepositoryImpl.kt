@@ -1,13 +1,21 @@
 package com.example.turnosapp.reservation.data
 
+import com.example.turnosapp.core.model.Page
 import com.example.turnosapp.core.network.runCatchingApi
 import com.example.turnosapp.reservation.data.mapper.ReservationMapper
 import com.example.turnosapp.reservation.data.remote.ReservationApi
 import com.example.turnosapp.reservation.data.remote.dto.PhoneRequestDto
 import com.example.turnosapp.reservation.data.remote.dto.StartReservationRequestDto
 import com.example.turnosapp.reservation.domain.model.Reservation
+import com.example.turnosapp.reservation.domain.model.ReservationStatus
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+
+/**
+ * Cuántas reservas se piden por página. Es una elección de la app, igual que en Buscar: se manda
+ * siempre, así no depende del tamaño por defecto de turnos.
+ */
+internal const val RESERVATIONS_PAGE_SIZE = 20
 
 class ReservationRepositoryImpl(
     private val api: ReservationApi,
@@ -29,6 +37,13 @@ class ReservationRepositoryImpl(
     // si existe, es el último creado. Turnos ordena por fecha de creación, del más nuevo al más viejo.
     override suspend fun findActive(): Result<Reservation?> =
         runCatchingApi {
-            api.listLatest(size = 1).firstOrNull()?.let(mapper::toDomain)?.takeUnless { it.status.isFinal }
+            api.list(status = null, page = 0, size = 1).items.firstOrNull()
+                ?.let(mapper::toDomain)?.takeUnless { it.status.isFinal }
+        }
+
+    override suspend fun list(status: ReservationStatus?, page: Int): Result<Page<Reservation>> =
+        runCatchingApi {
+            val response = api.list(status?.name, page, RESERVATIONS_PAGE_SIZE)
+            Page(response.items.map(mapper::toDomain), response.totalCount)
         }
 }

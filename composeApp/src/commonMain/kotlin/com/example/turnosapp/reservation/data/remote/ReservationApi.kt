@@ -1,6 +1,8 @@
 package com.example.turnosapp.reservation.data.remote
 
+import com.example.turnosapp.core.network.PagedResponse
 import com.example.turnosapp.core.network.ServiceUrls
+import com.example.turnosapp.core.network.toPagedResponse
 import com.example.turnosapp.reservation.data.remote.dto.PhoneRequestDto
 import com.example.turnosapp.reservation.data.remote.dto.ReservationDto
 import com.example.turnosapp.reservation.data.remote.dto.StartReservationRequestDto
@@ -33,10 +35,16 @@ class ReservationApi(
             setBody(request)
         }.body()
 
-    /** La primera página de las reservas propias, con el orden por defecto: las más nuevas primero. */
-    suspend fun listLatest(size: Int): List<ReservationDto> =
+    /**
+     * Una página de las reservas propias, con el orden por defecto de turnos: las más nuevas primero.
+     *
+     * @param status un estado de la máquina, o null para todas. Turnos acepta uno solo (ADR-0081).
+     * @param page la página, desde 0.
+     */
+    suspend fun list(status: String?, page: Int, size: Int): PagedResponse<ReservationDto> =
         client.get("${urls.turnos}/api/reservations") {
-            parameter("page", 0)
+            status?.let { parameter("status", it) }
+            parameter("page", page)
             parameter("size", size)
-        }.body()
+        }.toPagedResponse(page, size)
 }

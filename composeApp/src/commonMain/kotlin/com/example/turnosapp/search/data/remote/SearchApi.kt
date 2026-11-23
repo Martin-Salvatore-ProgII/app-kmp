@@ -1,6 +1,8 @@
 package com.example.turnosapp.search.data.remote
 
+import com.example.turnosapp.core.network.PagedResponse
 import com.example.turnosapp.core.network.ServiceUrls
+import com.example.turnosapp.core.network.toPagedResponse
 import com.example.turnosapp.search.data.remote.dto.CategoryDto
 import com.example.turnosapp.search.data.remote.dto.ProfessionalSummaryDto
 import com.example.turnosapp.search.data.remote.dto.SyncStatusDto
@@ -39,18 +41,10 @@ class SearchApi(
             parameter("page", page)
             parameter("size", size)
         }
-        val items: List<ProfessionalSummaryDto> = response.body()
-        // Sin la cabecera, se toma lo que ya llegó como todo lo que hay: así nunca se ofrece cargar
-        // una página vacía.
-        val total = response.headers[TOTAL_COUNT_HEADER]?.toIntOrNull() ?: (page * size + items.size)
-        return PagedResponse(items, total)
+        return response.toPagedResponse(page, size)
     }
 
     /** Responde siempre, aunque el catálogo no esté listo: es donde se ve su estado. */
     suspend fun getSyncStatus(): SyncStatusDto =
         client.get("${urls.catalog}/api/catalog/sync-status").body()
-
-    private companion object {
-        const val TOTAL_COUNT_HEADER = "X-Total-Count"
-    }
 }

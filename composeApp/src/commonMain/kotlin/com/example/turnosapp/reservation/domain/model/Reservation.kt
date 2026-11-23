@@ -10,6 +10,8 @@ import kotlin.time.Instant
  * @param expiresAt el vencimiento que fijó la cátedra; solo tiene sentido mientras no es final.
  * @param message el último mensaje de la cátedra para el usuario (el pedido o el rechazo del teléfono).
  * @param failureReason un código estable para elegir el mensaje propio; nunca se muestra tal cual.
+ * @param createdAt cuándo se inició; Mis reservas lo muestra como "Reservada el…".
+ * @param cancellationReason el motivo opcional que escribió quien la canceló.
  */
 data class Reservation(
     val id: String,
@@ -23,6 +25,9 @@ data class Reservation(
     val expiresAt: Instant?,
     val message: String?,
     val failureReason: String?,
+    val createdAt: Instant,
+    val cancelledAt: Instant? = null,
+    val cancellationReason: String? = null,
 ) {
     val professionalFullName: String get() = "$professionalFirstName $professionalLastName"
 }

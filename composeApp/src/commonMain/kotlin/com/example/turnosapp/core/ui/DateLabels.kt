@@ -38,3 +38,6 @@ fun LocalDate.longLabel(): String = "${dayOfWeek.label()} $day de ${monthNames[m
 
 /** "18:00". Sin segundos: la agenda no los usa. */
 fun LocalTime.label(): String = "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"
+
+/** "nov", para el bloque de fecha de una tarjeta. */
+fun LocalDate.monthShortLabel(): String = monthNames[month.number - 1].take(3)

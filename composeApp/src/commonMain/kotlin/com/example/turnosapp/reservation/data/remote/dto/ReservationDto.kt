@@ -3,7 +3,7 @@ package com.example.turnosapp.reservation.data.remote.dto
 import kotlinx.serialization.Serializable
 
 // Los cuerpos de las reservas de turnos (`docs/arq/contratos.md`, Reservas). Solo los campos que usa
-// la app: las fechas de creación, confirmación y cancelación se suman en Mis reservas (M5).
+// la app: `confirmedAt` no se muestra.
 
 /** Las horas van como `18:00`; turnos acepta `HH:mm` y `HH:mm:ss`. */
 @Serializable
@@ -18,7 +18,7 @@ data class PhoneRequestDto(
     val phoneNumber: String,
 )
 
-/** `expiresAt` es un instante ISO-8601 en UTC; las horas llegan como `18:00:00`. */
+/** Los instantes son ISO-8601 en UTC; las horas llegan como `18:00:00`. */
 @Serializable
 data class ReservationDto(
     val id: String,
@@ -32,4 +32,7 @@ data class ReservationDto(
     val expiresAt: String? = null,
     val message: String? = null,
     val failureReason: String? = null,
+    val createdAt: String,
+    val cancelledAt: String? = null,
+    val cancellationReason: String? = null,
 )

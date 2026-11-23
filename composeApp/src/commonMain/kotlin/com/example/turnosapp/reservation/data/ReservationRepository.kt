@@ -1,6 +1,8 @@
 package com.example.turnosapp.reservation.data
 
+import com.example.turnosapp.core.model.Page
 import com.example.turnosapp.reservation.domain.model.Reservation
+import com.example.turnosapp.reservation.domain.model.ReservationStatus
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 
@@ -28,4 +30,13 @@ interface ReservationRepository {
 
     /** El proceso activo del usuario, o null si no tiene ninguno (ADR-0080). */
     suspend fun findActive(): Result<Reservation?>
+
+    /**
+     * Una página de las reservas propias, de la más nueva a la más vieja (HU-08). Turnos responde con
+     * su base: funciona aunque la cátedra o el catálogo no estén disponibles (ADR-0025).
+     *
+     * @param status el estado por el que se filtra, o null para todas.
+     * @param page la página, desde 0.
+     */
+    suspend fun list(status: ReservationStatus?, page: Int): Result<Page<Reservation>>
 }

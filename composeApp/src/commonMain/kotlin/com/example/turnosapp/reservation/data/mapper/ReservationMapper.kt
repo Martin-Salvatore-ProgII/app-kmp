@@ -23,5 +23,8 @@ class ReservationMapper {
             expiresAt = dto.expiresAt?.let(Instant::parse),
             message = dto.message,
             failureReason = dto.failureReason,
+            createdAt = Instant.parse(dto.createdAt),
+            cancelledAt = dto.cancelledAt?.let(Instant::parse),
+            cancellationReason = dto.cancellationReason,
         )
 }

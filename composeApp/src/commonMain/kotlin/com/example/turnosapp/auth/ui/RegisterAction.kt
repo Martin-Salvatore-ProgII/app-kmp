@@ -4,6 +4,8 @@ import com.example.turnosapp.auth.domain.model.RegistrationField
 
 sealed interface RegisterAction {
     data class FieldChanged(val field: RegistrationField, val value: String) : RegisterAction
+    data object PasswordVisibilityToggled : RegisterAction
+    data object ImageUrlExpanded : RegisterAction
     data object Submit : RegisterAction
     data object BackClicked : RegisterAction
 }

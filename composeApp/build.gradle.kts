@@ -34,6 +34,8 @@ kotlin {
             // Rutas tipadas: cada destino es una clase @Serializable (ADR-0052).
             implementation(libs.navigation.compose)
             implementation(libs.kotlinx.serialization.json)
+            // Fechas y horas sin zona para los filtros y la agenda (ADR-0052).
+            implementation(libs.kotlinx.datetime)
             // Cliente HTTP (ADR-0052). El motor (OkHttp) lo pone androidApp (ADR-0075).
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)

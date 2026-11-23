@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.turnosapp.core.session.SessionRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -30,6 +31,9 @@ class SessionViewModel(
 
     /** Se lee una vez, al armar la navegación: con un JWT vigente se arranca en Buscar (ADR-0077). */
     val startsLoggedIn: Boolean = sessionRepository.isLoggedIn.value
+
+    /** Si se muestra la sección de administración (ADR-0082). Cambia al iniciar o cerrar la sesión. */
+    val isAdmin: StateFlow<Boolean> = sessionRepository.isAdmin
 
     private val _effects = Channel<SessionEffect>(Channel.BUFFERED)
     val effects: Flow<SessionEffect> = _effects.receiveAsFlow()

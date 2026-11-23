@@ -1,0 +1,56 @@
+package com.example.turnosapp.reservation.data
+
+import com.example.turnosapp.core.model.Page
+import com.example.turnosapp.core.network.runCatchingApi
+import com.example.turnosapp.reservation.data.mapper.ReservationMapper
+import com.example.turnosapp.reservation.data.remote.ReservationApi
+import com.example.turnosapp.reservation.data.remote.dto.CancelRequestDto
+import com.example.turnosapp.reservation.data.remote.dto.PhoneRequestDto
+import com.example.turnosapp.reservation.data.remote.dto.StartReservationRequestDto
+import com.example.turnosapp.reservation.domain.model.Reservation
+import com.example.turnosapp.reservation.domain.model.ReservationStatus
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+
+/**
+ * Cuántas reservas se piden por página. Es una elección de la app, igual que en Buscar: se manda
+ * siempre, así no depende del tamaño por defecto de turnos.
+ */
+internal const val RESERVATIONS_PAGE_SIZE = 20
+
+class ReservationRepositoryImpl(
+    private val api: ReservationApi,
+    private val mapper: ReservationMapper,
+) : ReservationRepository {
+
+    override suspend fun start(professionalId: Long, date: LocalDate, startTime: LocalTime): Result<Reservation> =
+        runCatchingApi {
+            mapper.toDomain(api.start(StartReservationRequestDto(professionalId, date.toString(), startTime.toString())))
+        }
+
+    override suspend fun get(reservationId: String): Result<Reservation> =
+        runCatchingApi { mapper.toDomain(api.get(reservationId)) }
+
+    override suspend fun submitPhone(reservationId: String, phoneNumber: String): Result<Reservation> =
+        runCatchingApi { mapper.toDomain(api.submitPhone(reservationId, PhoneRequestDto(phoneNumber))) }
+
+    // Un usuario tiene a lo sumo un proceso activo, y mientras lo tiene no puede crear otro (ADR-0024):
+    // si existe, es el último creado. Turnos ordena por fecha de creación, del más nuevo al más viejo.
+    override suspend fun findActive(): Result<Reservation?> =
+        runCatchingApi {
+            api.list(status = null, page = 0, size = 1).items.firstOrNull()
+                ?.let(mapper::toDomain)?.takeUnless { it.status.isFinal }
+        }
+
+    override suspend fun cancel(reservationId: String, reason: String): Result<Reservation> =
+        runCatchingApi {
+            val request = CancelRequestDto(reason.trim().takeIf { it.isNotEmpty() })
+            mapper.toDomain(api.cancel(reservationId, request))
+        }
+
+    override suspend fun list(status: ReservationStatus?, page: Int): Result<Page<Reservation>> =
+        runCatchingApi {
+            val response = api.list(status?.name, page, RESERVATIONS_PAGE_SIZE)
+            Page(response.items.map(mapper::toDomain), response.totalCount)
+        }
+}

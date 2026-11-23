@@ -14,6 +14,7 @@ fun AppError.toUserMessage(): String =
         is AppError.Validation -> "Revisá los datos marcados."
         is AppError.Business -> businessMessages[code] ?: UNKNOWN_MESSAGE
         AppError.Unavailable -> "El servicio no está disponible en este momento. Probá de nuevo en unos minutos."
+        AppError.CatalogNotReady -> "El catálogo todavía se está cargando. Probá de nuevo en unos segundos."
         AppError.Network -> "No se pudo conectar con el servidor. Revisá tu conexión y probá de nuevo."
         AppError.Unknown -> UNKNOWN_MESSAGE
     }
@@ -27,7 +28,7 @@ fun Throwable.toUserMessage(): String = (this as? AppError)?.toUserMessage() ?: 
 private const val UNKNOWN_MESSAGE = "Ocurrió un error inesperado. Probá de nuevo."
 
 // Los códigos de `docs/arq/contratos.md` (Códigos de error propios). Los 503 no están porque se
-// muestran todos igual, como Unavailable.
+// muestran como Unavailable, salvo CATALOG_NOT_READY, que tiene su propio AppError.
 private val businessMessages = mapOf(
     "VALIDATION_ERROR" to "Hay datos inválidos. Revisá el formulario.",
     "USERNAME_ALREADY_EXISTS" to "Ese nombre de usuario ya está en uso.",
@@ -40,5 +41,46 @@ private val businessMessages = mapOf(
     "RESERVATION_NOT_FOUND" to "No se encontró la reserva.",
     "ACTIVE_RESERVATION_EXISTS" to "Ya tenés una reserva en curso.",
     "PHONE_NOT_REQUESTED" to "La reserva no está esperando un teléfono.",
-    "RESERVATION_NOT_CANCELLABLE" to "Esta reserva ya no se puede cancelar.",
+    "RESERVATION_NOT_CANCELLABLE" to "Este turno ya no se puede cancelar.",
+)
+
+/**
+ * El mensaje de un proceso de reserva que terminó sin reservar (`FAILED` o `INVALID`), elegido por
+ * su `failureReason` (tabla de ADR-0080). El código nunca se muestra.
+ */
+fun reservationFailureMessage(failureReason: String?): String =
+    failureMessages[failureReason] ?: "No se pudo completar la reserva. Probá de nuevo."
+
+private const val INTEGRATION_FAILURE_MESSAGE = "No pudimos reservar en este momento. Probá de nuevo en unos minutos."
+
+private val failureMessages = mapOf(
+    "SLOT_ALREADY_HELD" to "Alguien reservó ese horario hace un momento. Elegí otro.",
+    "SLOT_ALREADY_RESERVED" to "Alguien reservó ese horario hace un momento. Elegí otro.",
+    "INVALID_SLOT" to "Ese horario ya no está disponible. Elegí otro.",
+    "PROFESSIONAL_DISABLED" to "El profesional ya no recibe reservas.",
+    "PROFESSIONAL_NOT_FOUND" to "No se encontró el profesional.",
+    // Turnos no llegó a la cátedra o no tuvo respuesta: se puede volver a intentar (ADR-0069).
+    "INTEGRATION_TIMEOUT" to INTEGRATION_FAILURE_MESSAGE,
+    "INTEGRATION_UNAVAILABLE" to INTEGRATION_FAILURE_MESSAGE,
+)
+
+/**
+ * Para el administrador: qué le pasó a un proceso que terminó sin reservar, contado en tercera persona
+ * y con el `failureReason` al lado, para cruzarlo con los registros del servicio (ADR-0082). Es la única
+ * excepción a no mostrar códigos, y solo la ve un administrador.
+ */
+fun adminFailureDescription(failureReason: String): String =
+    "${adminFailureMessages[failureReason] ?: "Motivo informado por la cátedra"} ($failureReason)"
+
+private val adminFailureMessages = mapOf(
+    "SLOT_ALREADY_HELD" to "Ese turno lo acababa de tomar otra persona",
+    "SLOT_ALREADY_RESERVED" to "Ese turno ya estaba reservado",
+    "INVALID_SLOT" to "El turno ya no estaba en la agenda del profesional",
+    "PROFESSIONAL_DISABLED" to "El profesional no estaba habilitado",
+    "PROFESSIONAL_NOT_FOUND" to "La cátedra no encontró al profesional",
+    "HOLD_EXPIRED" to "El turno retenido venció antes de confirmarse",
+    "INTEGRATION_TIMEOUT" to "La cátedra no respondió a tiempo",
+    "INTEGRATION_UNAVAILABLE" to "No se pudo llegar a la cátedra",
+    "CATEDRA_REPORTED_FAILED" to "La cátedra informó el proceso como fallido",
+    "REQUEST_EVENT_MISMATCH" to "El teléfono no correspondía al último pedido de la cátedra",
 )

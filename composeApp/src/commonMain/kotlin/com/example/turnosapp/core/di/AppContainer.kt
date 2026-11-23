@@ -1,6 +1,14 @@
 package com.example.turnosapp.core.di
 
+import com.example.turnosapp.admin.data.AdminReservationRepository
+import com.example.turnosapp.admin.data.AdminReservationRepositoryImpl
+import com.example.turnosapp.admin.data.mapper.AdminReservationMapper
+import com.example.turnosapp.admin.data.remote.AdminReservationApi
 import com.example.turnosapp.auth.data.AuthRepository
+import com.example.turnosapp.availability.data.AvailabilityRepository
+import com.example.turnosapp.availability.data.AvailabilityRepositoryImpl
+import com.example.turnosapp.availability.data.mapper.AvailabilityMapper
+import com.example.turnosapp.availability.data.remote.AvailabilityApi
 import com.example.turnosapp.auth.data.AuthRepositoryImpl
 import com.example.turnosapp.auth.data.mapper.RegistrationMapper
 import com.example.turnosapp.auth.data.remote.AuthApi
@@ -9,6 +17,18 @@ import com.example.turnosapp.core.network.createHttpClient
 import com.example.turnosapp.core.session.SessionRepository
 import com.example.turnosapp.core.session.SessionRepositoryImpl
 import com.example.turnosapp.core.session.TokenStorage
+import com.example.turnosapp.professional.data.ProfessionalRepository
+import com.example.turnosapp.professional.data.ProfessionalRepositoryImpl
+import com.example.turnosapp.professional.data.mapper.ProfessionalMapper
+import com.example.turnosapp.professional.data.remote.ProfessionalApi
+import com.example.turnosapp.reservation.data.ReservationRepository
+import com.example.turnosapp.reservation.data.ReservationRepositoryImpl
+import com.example.turnosapp.reservation.data.mapper.ReservationMapper
+import com.example.turnosapp.reservation.data.remote.ReservationApi
+import com.example.turnosapp.search.data.SearchRepository
+import com.example.turnosapp.search.data.SearchRepositoryImpl
+import com.example.turnosapp.search.data.mapper.SearchMapper
+import com.example.turnosapp.search.data.remote.SearchApi
 import io.ktor.client.engine.HttpClientEngine
 
 /**
@@ -33,4 +53,18 @@ class AppContainer(
     private val httpClient = createHttpClient(httpEngine, sessionRepository)
 
     val authRepository: AuthRepository = AuthRepositoryImpl(AuthApi(httpClient, urls), sessionRepository, RegistrationMapper())
+
+    val searchRepository: SearchRepository = SearchRepositoryImpl(SearchApi(httpClient, urls), SearchMapper())
+
+    val professionalRepository: ProfessionalRepository =
+        ProfessionalRepositoryImpl(ProfessionalApi(httpClient, urls), ProfessionalMapper())
+
+    val availabilityRepository: AvailabilityRepository =
+        AvailabilityRepositoryImpl(AvailabilityApi(httpClient, urls), AvailabilityMapper())
+
+    val reservationRepository: ReservationRepository =
+        ReservationRepositoryImpl(ReservationApi(httpClient, urls), ReservationMapper())
+
+    val adminReservationRepository: AdminReservationRepository =
+        AdminReservationRepositoryImpl(AdminReservationApi(httpClient, urls), AdminReservationMapper(ReservationMapper()))
 }

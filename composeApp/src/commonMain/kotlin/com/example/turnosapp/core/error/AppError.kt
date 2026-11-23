@@ -22,6 +22,13 @@ sealed class AppError : Exception() {
     /** 503: el servicio no está disponible por ahora; se puede reintentar. */
     data object Unavailable : AppError()
 
+    /**
+     * 503 `CATALOG_NOT_READY`: el catálogo todavía no tiene su primera copia. Es el único 503 que la
+     * app distingue, porque no es una falla sino una espera: Buscar lo muestra con su propia pantalla
+     * (ADR-0079).
+     */
+    data object CatalogNotReady : AppError()
+
     /** No se llegó al servidor: sin conexión, timeout o certificado no aceptado. */
     data object Network : AppError()
 

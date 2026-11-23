@@ -16,6 +16,7 @@ import io.ktor.client.request.HttpRequestData
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
@@ -109,5 +110,42 @@ class AdminReservationRepositoryImplTest {
         val repository = repositoryAnswering(HttpStatusCode.Forbidden, """{"status":403}""", "application/problem+json")
 
         assertEquals(AppError.Forbidden, repository.list(AdminReservationFilters(), page = 0).exceptionOrNull())
+    }
+
+    @Test
+    fun `ver una reserva pide la ruta administrativa con su id`() = runTest {
+        val repository = repositoryAnswering(HttpStatusCode.OK, cancelledJson)
+
+        val reservation = repository.get("5b1f").getOrThrow()
+
+        assertEquals(HttpMethod.Get, lastRequest!!.method)
+        assertEquals("https://turnos/api/admin/reservations/5b1f", lastRequest!!.url.toString())
+        assertEquals("jperez", reservation.owner.login)
+    }
+
+    @Test
+    fun `cancelar envía el motivo sin los espacios de los extremos`() = runTest {
+        val repository = repositoryAnswering(HttpStatusCode.OK, cancelledJson)
+
+        val reservation = repository.cancel("5b1f", "  Pidió la baja  ").getOrThrow()
+
+        assertEquals(HttpMethod.Post, lastRequest!!.method)
+        assertEquals("https://turnos/api/admin/reservations/5b1f/cancel", lastRequest!!.url.toString())
+        assertEquals("""{"reason":"Pidió la baja"}""", (lastRequest!!.body as TextContent).text)
+        assertEquals("admin", reservation.cancelledBy)
+    }
+
+    @Test
+    fun `cancelar una reserva que ya no se puede llega con su code`() = runTest {
+        val repository = repositoryAnswering(
+            HttpStatusCode.Conflict,
+            """{"status":409,"code":"RESERVATION_NOT_CANCELLABLE"}""",
+            "application/problem+json",
+        )
+
+        assertEquals(
+            AppError.Business(409, "RESERVATION_NOT_CANCELLABLE"),
+            repository.cancel("5b1f", "Pidió la baja").exceptionOrNull(),
+        )
     }
 }

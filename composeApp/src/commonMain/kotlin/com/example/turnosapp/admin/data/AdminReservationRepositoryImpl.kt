@@ -2,6 +2,7 @@ package com.example.turnosapp.admin.data
 
 import com.example.turnosapp.admin.data.mapper.AdminReservationMapper
 import com.example.turnosapp.admin.data.remote.AdminReservationApi
+import com.example.turnosapp.admin.data.remote.dto.AdminCancelRequestDto
 import com.example.turnosapp.admin.domain.model.AdminReservation
 import com.example.turnosapp.admin.domain.model.AdminReservationFilters
 import com.example.turnosapp.core.model.Page
@@ -20,4 +21,10 @@ class AdminReservationRepositoryImpl(
             val response = api.list(filters, page, ADMIN_RESERVATIONS_PAGE_SIZE)
             Page(response.items.map(mapper::toDomain), response.totalCount)
         }
+
+    override suspend fun get(reservationId: String): Result<AdminReservation> =
+        runCatchingApi { mapper.toDomain(api.get(reservationId)) }
+
+    override suspend fun cancel(reservationId: String, reason: String): Result<AdminReservation> =
+        runCatchingApi { mapper.toDomain(api.cancel(reservationId, AdminCancelRequestDto(reason.trim()))) }
 }

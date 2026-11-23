@@ -25,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.turnosapp.admin.ui.AdminReservationDetailRoute
 import com.example.turnosapp.admin.ui.AdminRoute
 import com.example.turnosapp.availability.ui.AvailabilityRoute
 import com.example.turnosapp.auth.ui.LoginRoute
@@ -203,7 +204,19 @@ fun AppNavigation(
                     },
                 )
             }
-            composable<Admin> { AdminRoute(container = container) }
+            composable<Admin> {
+                AdminRoute(
+                    container = container,
+                    onReservationClick = { id -> navController.navigate(AdminReservationDetail(id)) },
+                )
+            }
+            composable<AdminReservationDetail> { backStackEntry ->
+                AdminReservationDetailRoute(
+                    container = container,
+                    reservationId = backStackEntry.toRoute<AdminReservationDetail>().reservationId,
+                    onBack = { navController.popBackStack() },
+                )
+            }
         }
     }
 }

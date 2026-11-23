@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
@@ -36,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,12 +65,20 @@ import com.example.turnosapp.reservation.ui.ReservationStatusBadge
 @Composable
 fun AdminRoute(
     container: AppContainer,
+    onReservationClick: (reservationId: String) -> Unit,
     viewModel: AdminViewModel = viewModel { AdminViewModel(container.adminReservationRepository) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LifecycleStartEffect(viewModel) {
         viewModel.onAction(AdminAction.ScreenStarted)
         onStopOrDispose {}
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is AdminEffect.NavigateToDetail -> onReservationClick(effect.reservationId)
+            }
+        }
     }
     AdminScreen(state = state, onAction = viewModel::onAction)
 }
@@ -195,20 +205,22 @@ private fun ReservationList(state: AdminUiState, onAction: (AdminAction) -> Unit
         verticalArrangement = Arrangement.spacedBy(10.dp),
         contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp),
     ) {
-        items(state.reservations, key = { it.reservation.id }) { AdminReservationCard(it) }
+        items(state.reservations, key = { it.reservation.id }) {
+            AdminReservationCard(it, onClick = { onAction(AdminAction.ReservationClicked(it.reservation.id)) })
+        }
         item { ListFooter(state, onAction) }
     }
 }
 
 /** Una reserva: el día a la izquierda, y el profesional, el horario, el dueño y el estado exacto al lado. */
 @Composable
-private fun AdminReservationCard(item: AdminReservation) {
+private fun AdminReservationCard(item: AdminReservation, onClick: () -> Unit) {
     val reservation = item.reservation
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+    OutlinedCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
-            modifier = Modifier.heightIn(min = 96.dp).padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),
+            modifier = Modifier.heightIn(min = 96.dp).padding(start = 14.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(48.dp)) {
                 Text(reservation.date.day.toString().padStart(2, '0'), style = MaterialTheme.typography.titleLarge)
@@ -244,6 +256,7 @@ private fun AdminReservationCard(item: AdminReservation) {
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
         }
     }
 }

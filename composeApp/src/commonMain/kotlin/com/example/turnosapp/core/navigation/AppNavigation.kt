@@ -33,6 +33,7 @@ import com.example.turnosapp.auth.ui.SessionEffect
 import com.example.turnosapp.auth.ui.SessionViewModel
 import com.example.turnosapp.core.di.AppContainer
 import com.example.turnosapp.myreservations.ui.MyReservationsRoute
+import com.example.turnosapp.myreservations.ui.ReservationDetailRoute
 import com.example.turnosapp.professional.ui.ProfessionalRoute
 import com.example.turnosapp.reservation.ui.ReservationRoute
 import com.example.turnosapp.search.ui.SearchRoute
@@ -185,7 +186,20 @@ fun AppNavigation(
                 MyReservationsRoute(
                     container = container,
                     onReservationClick = { id -> navController.navigate(Reservation(id)) },
+                    onDetailClick = { id -> navController.navigate(ReservationDetail(id)) },
                     onSearchClick = { navController.navigateToTab(TopLevelDestination.SEARCH) },
+                )
+            }
+            composable<ReservationDetail> { backStackEntry ->
+                ReservationDetailRoute(
+                    container = container,
+                    reservationId = backStackEntry.toRoute<ReservationDetail>().reservationId,
+                    onBack = { navController.popBackStack() },
+                    onSearch = {
+                        // Primero sale el Detalle, así Mis reservas no lo guarda y no reaparece al volver a esa sección.
+                        navController.popBackStack<MyReservations>(inclusive = false)
+                        navController.navigateToTab(TopLevelDestination.SEARCH)
+                    },
                 )
             }
             composable<Admin> { AdminRoute() }

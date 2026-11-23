@@ -52,6 +52,7 @@ import com.example.turnosapp.reservation.domain.model.Reservation
 fun MyReservationsRoute(
     container: AppContainer,
     onReservationClick: (reservationId: String) -> Unit,
+    onDetailClick: (reservationId: String) -> Unit,
     onSearchClick: () -> Unit,
     viewModel: MyReservationsViewModel = viewModel { MyReservationsViewModel(container.reservationRepository) },
 ) {
@@ -64,6 +65,7 @@ fun MyReservationsRoute(
         viewModel.effects.collect { effect ->
             when (effect) {
                 is MyReservationsEffect.NavigateToReservation -> onReservationClick(effect.reservationId)
+                is MyReservationsEffect.NavigateToDetail -> onDetailClick(effect.reservationId)
                 MyReservationsEffect.NavigateToSearch -> onSearchClick()
             }
         }

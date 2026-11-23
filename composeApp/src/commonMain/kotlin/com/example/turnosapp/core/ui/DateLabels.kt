@@ -3,7 +3,10 @@ package com.example.turnosapp.core.ui
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 // Textos de fechas y horas en español. Escritos a mano porque kotlinx-datetime no traduce nombres
 // de días ni de meses, y son pocos.
@@ -41,3 +44,9 @@ fun LocalTime.label(): String = "${hour.toString().padStart(2, '0')}:${minute.to
 
 /** "nov", para el bloque de fecha de una tarjeta. */
 fun LocalDate.monthShortLabel(): String = monthNames[month.number - 1].take(3)
+
+/** "21 de noviembre a las 10:15", en la zona del teléfono: es cuándo hizo algo el propio usuario. */
+fun Instant.dayTimeLabel(zone: TimeZone = TimeZone.currentSystemDefault()): String {
+    val local = toLocalDateTime(zone)
+    return "${local.date.day} de ${monthNames[local.date.month.number - 1]} a las ${local.time.label()}"
+}

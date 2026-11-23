@@ -15,5 +15,8 @@ sealed interface MyReservationsAction {
 sealed interface MyReservationsEffect {
     /** Una reserva en curso se sigue en Reserva en curso (ADR-0081). */
     data class NavigateToReservation(val reservationId: String) : MyReservationsEffect
+
+    /** Una reserva terminada se ve en el Detalle, donde se puede cancelar si corresponde. */
+    data class NavigateToDetail(val reservationId: String) : MyReservationsEffect
     data object NavigateToSearch : MyReservationsEffect
 }

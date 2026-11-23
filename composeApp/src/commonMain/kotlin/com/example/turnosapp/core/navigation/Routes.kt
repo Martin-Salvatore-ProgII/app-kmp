@@ -45,6 +45,12 @@ data class Availability(
     val date: String,
 )
 
+/** Detalle de una reserva propia ya terminada, por su id local de turnos (HU-08, HU-09). */
+@Serializable
+data class ReservationDetail(
+    val reservationId: String,
+)
+
 /** Reserva en curso: el seguimiento de un proceso de reserva, por su id local de turnos. */
 @Serializable
 data class Reservation(

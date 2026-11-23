@@ -20,6 +20,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import com.example.turnosapp.reservation.ui.label
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MyReservationsViewModelTest {

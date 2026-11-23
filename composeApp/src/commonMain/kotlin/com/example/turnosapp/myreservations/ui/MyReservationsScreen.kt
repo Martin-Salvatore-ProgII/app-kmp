@@ -43,6 +43,7 @@ import com.example.turnosapp.core.di.AppContainer
 import com.example.turnosapp.core.ui.label
 import com.example.turnosapp.core.ui.monthShortLabel
 import com.example.turnosapp.reservation.domain.model.Reservation
+import com.example.turnosapp.reservation.ui.ReservationStatusBadge
 
 /**
  * Conecta la pantalla con su ViewModel. Cada vez que la pantalla se vuelve a ver, le pide que

@@ -39,4 +39,13 @@ interface ReservationRepository {
      * @param page la página, desde 0.
      */
     suspend fun list(status: ReservationStatus?, page: Int): Result<Page<Reservation>>
+
+    /**
+     * Cancela una reserva propia confirmada (HU-09, ADR-0026). Turnos responde con la reserva en
+     * `CANCELLED`, también si ya lo estaba. `RESERVATION_NOT_CANCELLABLE` (no confirmada o el turno ya
+     * empezó, ADR-0071) llega como `AppError.Business`; la cátedra caída, como `AppError.Unavailable`.
+     *
+     * @param reason el motivo; en blanco, se cancela sin motivo.
+     */
+    suspend fun cancel(reservationId: String, reason: String): Result<Reservation>
 }

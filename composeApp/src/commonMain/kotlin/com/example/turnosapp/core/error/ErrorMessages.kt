@@ -41,7 +41,7 @@ private val businessMessages = mapOf(
     "RESERVATION_NOT_FOUND" to "No se encontró la reserva.",
     "ACTIVE_RESERVATION_EXISTS" to "Ya tenés una reserva en curso.",
     "PHONE_NOT_REQUESTED" to "La reserva no está esperando un teléfono.",
-    "RESERVATION_NOT_CANCELLABLE" to "Esta reserva ya no se puede cancelar.",
+    "RESERVATION_NOT_CANCELLABLE" to "Este turno ya no se puede cancelar.",
 )
 
 /**

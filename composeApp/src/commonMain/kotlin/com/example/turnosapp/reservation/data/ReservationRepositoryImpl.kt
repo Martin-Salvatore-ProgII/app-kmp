@@ -4,6 +4,7 @@ import com.example.turnosapp.core.model.Page
 import com.example.turnosapp.core.network.runCatchingApi
 import com.example.turnosapp.reservation.data.mapper.ReservationMapper
 import com.example.turnosapp.reservation.data.remote.ReservationApi
+import com.example.turnosapp.reservation.data.remote.dto.CancelRequestDto
 import com.example.turnosapp.reservation.data.remote.dto.PhoneRequestDto
 import com.example.turnosapp.reservation.data.remote.dto.StartReservationRequestDto
 import com.example.turnosapp.reservation.domain.model.Reservation
@@ -39,6 +40,12 @@ class ReservationRepositoryImpl(
         runCatchingApi {
             api.list(status = null, page = 0, size = 1).items.firstOrNull()
                 ?.let(mapper::toDomain)?.takeUnless { it.status.isFinal }
+        }
+
+    override suspend fun cancel(reservationId: String, reason: String): Result<Reservation> =
+        runCatchingApi {
+            val request = CancelRequestDto(reason.trim().takeIf { it.isNotEmpty() })
+            mapper.toDomain(api.cancel(reservationId, request))
         }
 
     override suspend fun list(status: ReservationStatus?, page: Int): Result<Page<Reservation>> =

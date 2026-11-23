@@ -34,3 +34,9 @@ data class ReservationOwnerDto(
     val firstName: String,
     val lastName: String,
 )
+
+/** El motivo es obligatorio para un administrador: de 1 a 500 caracteres y no en blanco (HU-10). */
+@Serializable
+data class AdminCancelRequestDto(
+    val reason: String,
+)

@@ -63,3 +63,24 @@ private val failureMessages = mapOf(
     "INTEGRATION_TIMEOUT" to INTEGRATION_FAILURE_MESSAGE,
     "INTEGRATION_UNAVAILABLE" to INTEGRATION_FAILURE_MESSAGE,
 )
+
+/**
+ * Para el administrador: qué le pasó a un proceso que terminó sin reservar, contado en tercera persona
+ * y con el `failureReason` al lado, para cruzarlo con los registros del servicio (ADR-0082). Es la única
+ * excepción a no mostrar códigos, y solo la ve un administrador.
+ */
+fun adminFailureDescription(failureReason: String): String =
+    "${adminFailureMessages[failureReason] ?: "Motivo informado por la cátedra"} ($failureReason)"
+
+private val adminFailureMessages = mapOf(
+    "SLOT_ALREADY_HELD" to "Ese turno lo acababa de tomar otra persona",
+    "SLOT_ALREADY_RESERVED" to "Ese turno ya estaba reservado",
+    "INVALID_SLOT" to "El turno ya no estaba en la agenda del profesional",
+    "PROFESSIONAL_DISABLED" to "El profesional no estaba habilitado",
+    "PROFESSIONAL_NOT_FOUND" to "La cátedra no encontró al profesional",
+    "HOLD_EXPIRED" to "El turno retenido venció antes de confirmarse",
+    "INTEGRATION_TIMEOUT" to "La cátedra no respondió a tiempo",
+    "INTEGRATION_UNAVAILABLE" to "No se pudo llegar a la cátedra",
+    "CATEDRA_REPORTED_FAILED" to "La cátedra informó el proceso como fallido",
+    "REQUEST_EVENT_MISMATCH" to "El teléfono no correspondía al último pedido de la cátedra",
+)

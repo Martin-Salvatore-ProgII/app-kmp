@@ -51,6 +51,12 @@ data class ReservationDetail(
     val reservationId: String,
 )
 
+/** Detalle de cualquier reserva para un administrador, por su id local de turnos (HU-10). */
+@Serializable
+data class AdminReservationDetail(
+    val reservationId: String,
+)
+
 /** Reserva en curso: el seguimiento de un proceso de reserva, por su id local de turnos. */
 @Serializable
 data class Reservation(

@@ -16,4 +16,16 @@ interface AdminReservationRepository {
      * @param page la página, desde 0.
      */
     suspend fun list(filters: AdminReservationFilters, page: Int): Result<Page<AdminReservation>>
+
+    /** Cualquier reserva, por su id local. Una inexistente llega como `RESERVATION_NOT_FOUND`. */
+    suspend fun get(reservationId: String): Result<AdminReservation>
+
+    /**
+     * Cancela una reserva confirmada en nombre de su dueño (HU-10). Las mismas reglas que la
+     * cancelación del dueño: `RESERVATION_NOT_CANCELLABLE` llega como `AppError.Business` y la cátedra
+     * caída como `AppError.Unavailable`. Turnos responde con `cancelledBy` = el login del administrador.
+     *
+     * @param reason el motivo, obligatorio; se envía sin los espacios de los extremos.
+     */
+    suspend fun cancel(reservationId: String, reason: String): Result<AdminReservation>
 }

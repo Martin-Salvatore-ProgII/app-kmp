@@ -27,4 +27,11 @@ sealed interface AdminAction {
 
     data object Retry : AdminAction
     data object LoadMore : AdminAction
+
+    /** Toda reserva abre el detalle admin, también una en curso (ADR-0082). */
+    data class ReservationClicked(val reservationId: String) : AdminAction
+}
+
+sealed interface AdminEffect {
+    data class NavigateToDetail(val reservationId: String) : AdminEffect
 }

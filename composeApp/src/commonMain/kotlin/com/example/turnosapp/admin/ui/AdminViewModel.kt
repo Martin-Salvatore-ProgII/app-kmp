@@ -6,9 +6,12 @@ import com.example.turnosapp.admin.data.AdminReservationRepository
 import com.example.turnosapp.admin.domain.model.AdminReservationFilters
 import com.example.turnosapp.core.error.toUserMessage
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -22,6 +25,9 @@ class AdminViewModel(
 
     private val _state = MutableStateFlow(AdminUiState())
     val state: StateFlow<AdminUiState> = _state.asStateFlow()
+
+    private val _effects = Channel<AdminEffect>(Channel.BUFFERED)
+    val effects: Flow<AdminEffect> = _effects.receiveAsFlow()
 
     // La carga en curso. Una nueva la cancela, así la respuesta de un filtro viejo nunca pisa a la
     // del filtro nuevo (el mismo criterio que en Buscar y Mis reservas).
@@ -42,6 +48,9 @@ class AdminViewModel(
             is AdminAction.FromSelected -> applyFilters { it.copy(from = action.date) }
             is AdminAction.ToSelected -> applyFilters { it.copy(to = action.date) }
             AdminAction.LoadMore -> loadMore()
+            // Reserva en curso usa la ruta del dueño, que con una reserva ajena responde 404 (ADR-0082).
+            is AdminAction.ReservationClicked ->
+                viewModelScope.launch { _effects.send(AdminEffect.NavigateToDetail(action.reservationId)) }
         }
     }
 

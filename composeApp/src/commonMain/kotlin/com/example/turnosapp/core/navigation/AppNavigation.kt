@@ -181,7 +181,13 @@ fun AppNavigation(
                     },
                 )
             }
-            composable<MyReservations> { MyReservationsRoute() }
+            composable<MyReservations> {
+                MyReservationsRoute(
+                    container = container,
+                    onReservationClick = { id -> navController.navigate(Reservation(id)) },
+                    onSearchClick = { navController.navigateToTab(TopLevelDestination.SEARCH) },
+                )
+            }
             composable<Admin> { AdminRoute() }
         }
     }

@@ -35,6 +35,14 @@ open class FakeReservationRepository : ReservationRepository {
 
     override suspend fun findActive(): Result<Reservation?> = activeResult
 
+    var cancelResult: Result<Reservation> = Result.success(reservation(ReservationStatus.CANCELLED))
+    val cancelReasons = mutableListOf<String>()
+
+    override suspend fun cancel(reservationId: String, reason: String): Result<Reservation> {
+        cancelReasons += reason
+        return cancelResult
+    }
+
     /** Las respuestas del listado, por página pedida; una página sin respuesta llega vacía. */
     val listResults = mutableMapOf<Int, Result<Page<Reservation>>>()
     val listCalls = mutableListOf<Pair<ReservationStatus?, Int>>()

@@ -13,6 +13,12 @@ data class StartReservationRequestDto(
     val startTime: String,
 )
 
+/** El motivo es opcional (hasta 500 caracteres); null se envía como cancelación sin motivo. */
+@Serializable
+data class CancelRequestDto(
+    val reason: String?,
+)
+
 @Serializable
 data class PhoneRequestDto(
     val phoneNumber: String,

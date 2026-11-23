@@ -3,6 +3,7 @@ package com.example.turnosapp.reservation.data.remote
 import com.example.turnosapp.core.network.PagedResponse
 import com.example.turnosapp.core.network.ServiceUrls
 import com.example.turnosapp.core.network.toPagedResponse
+import com.example.turnosapp.reservation.data.remote.dto.CancelRequestDto
 import com.example.turnosapp.reservation.data.remote.dto.PhoneRequestDto
 import com.example.turnosapp.reservation.data.remote.dto.ReservationDto
 import com.example.turnosapp.reservation.data.remote.dto.StartReservationRequestDto
@@ -31,6 +32,12 @@ class ReservationApi(
 
     suspend fun submitPhone(reservationId: String, request: PhoneRequestDto): ReservationDto =
         client.post("${urls.turnos}/api/reservations/$reservationId/phone") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+
+    suspend fun cancel(reservationId: String, request: CancelRequestDto): ReservationDto =
+        client.post("${urls.turnos}/api/reservations/$reservationId/cancel") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()

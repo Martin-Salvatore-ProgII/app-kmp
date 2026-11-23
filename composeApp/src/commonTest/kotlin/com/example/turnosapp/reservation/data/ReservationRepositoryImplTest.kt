@@ -140,4 +140,36 @@ class ReservationRepositoryImplTest {
         assertEquals(Instant.parse("2026-11-23T19:40:00Z"), reservation.cancelledAt)
         assertEquals("No llego", reservation.cancellationReason)
     }
+
+    @Test
+    fun `cancelar envía el motivo sin espacios de más y lee la reserva cancelada`() = runTest {
+        val repository = repositoryAnswering(HttpStatusCode.OK, reservationJson("CANCELLED"))
+
+        val reservation = repository.cancel("5b1f", "  No llego por trabajo. ").getOrThrow()
+
+        assertEquals(HttpMethod.Post, lastRequest!!.method)
+        assertEquals("https://turnos/api/reservations/5b1f/cancel", lastRequest!!.url.toString())
+        assertEquals("""{"reason":"No llego por trabajo."}""", (lastRequest!!.body as TextContent).text)
+        assertEquals(ReservationStatus.CANCELLED, reservation.status)
+    }
+
+    @Test
+    fun `un motivo en blanco se envía como cancelación sin motivo`() = runTest {
+        val repository = repositoryAnswering(HttpStatusCode.OK, reservationJson("CANCELLED"))
+
+        repository.cancel("5b1f", "   ").getOrThrow()
+
+        assertEquals("""{"reason":null}""", (lastRequest!!.body as TextContent).text)
+    }
+
+    @Test
+    fun `una reserva que no se puede cancelar llega con su code`() = runTest {
+        val repository = repositoryAnswering(
+            HttpStatusCode.Conflict,
+            """{"status":409,"code":"RESERVATION_NOT_CANCELLABLE"}""",
+            "application/problem+json",
+        )
+
+        assertEquals(AppError.Business(409, "RESERVATION_NOT_CANCELLABLE"), repository.cancel("5b1f", "").exceptionOrNull())
+    }
 }

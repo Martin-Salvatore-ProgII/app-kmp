@@ -97,8 +97,16 @@ class MyReservationsViewModel(
         }
     }
 
+    // En curso, a Reserva en curso, que ya sigue el proceso y pide el teléfono; terminada, al
+    // Detalle (ADR-0081).
     private fun openReservation(reservation: Reservation) {
-        send(MyReservationsEffect.NavigateToReservation(reservation.id))
+        send(
+            if (reservation.status.isFinal) {
+                MyReservationsEffect.NavigateToDetail(reservation.id)
+            } else {
+                MyReservationsEffect.NavigateToReservation(reservation.id)
+            },
+        )
     }
 
     private fun send(effect: MyReservationsEffect) {

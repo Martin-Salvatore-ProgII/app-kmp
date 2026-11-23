@@ -132,6 +132,15 @@ class MyReservationsViewModelTest {
     }
 
     @Test
+    fun `tocar una reserva terminada lleva al Detalle`() = runTest {
+        val viewModel = MyReservationsViewModel(repository)
+
+        viewModel.onAction(MyReservationsAction.ReservationClicked(cancelled))
+
+        assertEquals(MyReservationsEffect.NavigateToDetail("b"), viewModel.effects.first())
+    }
+
+    @Test
     fun `cada estado tiene su nombre para el usuario`() {
         assertEquals("Reservando…", ReservationStatus.HELD.label())
         assertEquals("Esperando tu teléfono", ReservationStatus.AWAITING_PHONE.label())

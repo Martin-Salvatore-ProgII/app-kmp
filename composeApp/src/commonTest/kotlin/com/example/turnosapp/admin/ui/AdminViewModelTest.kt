@@ -6,6 +6,7 @@ import com.example.turnosapp.core.model.Page
 import com.example.turnosapp.reservation.domain.model.ReservationStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -172,5 +173,14 @@ class AdminViewModelTest {
         assertEquals("Vencida", ReservationStatus.EXPIRED.adminLabel())
         assertEquals("Inválida", ReservationStatus.INVALID.adminLabel())
         assertEquals("Fallida", ReservationStatus.FAILED.adminLabel())
+    }
+
+    @Test
+    fun `toda reserva abre el detalle admin, también una en curso`() = runTest {
+        val viewModel = AdminViewModel(repository)
+
+        viewModel.onAction(AdminAction.ReservationClicked("c"))
+
+        assertEquals(AdminEffect.NavigateToDetail("c"), viewModel.effects.first())
     }
 }

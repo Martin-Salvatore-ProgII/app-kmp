@@ -203,7 +203,7 @@ fun AppNavigation(
                     },
                 )
             }
-            composable<Admin> { AdminRoute() }
+            composable<Admin> { AdminRoute(container = container) }
         }
     }
 }

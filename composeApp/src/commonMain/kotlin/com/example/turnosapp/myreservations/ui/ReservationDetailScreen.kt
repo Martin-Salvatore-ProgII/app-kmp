@@ -50,6 +50,7 @@ import com.example.turnosapp.core.ui.label
 import com.example.turnosapp.core.ui.longLabel
 import com.example.turnosapp.reservation.domain.model.Reservation
 import com.example.turnosapp.reservation.domain.model.ReservationStatus
+import com.example.turnosapp.reservation.ui.ReservationStatusBadge
 
 /** Conecta la pantalla con su ViewModel y traduce sus efectos en navegación. */
 @Composable

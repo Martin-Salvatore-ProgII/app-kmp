@@ -1,7 +1,6 @@
 package com.example.turnosapp.search.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,7 +30,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.InputChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -52,6 +50,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.turnosapp.core.di.AppContainer
+import com.example.turnosapp.core.ui.ChosenOrEmptyChip
 import com.example.turnosapp.core.ui.AppDatePickerDialog
 import com.example.turnosapp.core.ui.InitialsAvatar
 import com.example.turnosapp.core.ui.label
@@ -216,42 +215,6 @@ private fun FilterChips(
             onClick = { onAction(SearchAction.SheetOpened(SearchSheet.ENABLED)) },
             label = { Text(if (filters.enabled) "Habilitados" else "No habilitados") },
             trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
-            modifier = Modifier.heightIn(min = 40.dp),
-        )
-    }
-}
-
-/**
- * Sin valor, un chip que abre su hoja. Con valor, un chip marcado que muestra lo elegido: tocarlo
- * abre la hoja para cambiarlo, y la cruz quita el filtro.
- */
-@Composable
-private fun ChosenOrEmptyChip(
-    chosenLabel: String?,
-    emptyLabel: String,
-    onOpen: () -> Unit,
-    onRemove: () -> Unit,
-) {
-    if (chosenLabel == null) {
-        FilterChip(
-            selected = false,
-            onClick = onOpen,
-            label = { Text(emptyLabel) },
-            trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
-            modifier = Modifier.heightIn(min = 40.dp),
-        )
-    } else {
-        InputChip(
-            selected = true,
-            onClick = onOpen,
-            label = { Text(chosenLabel) },
-            trailingIcon = {
-                Icon(
-                    Icons.Filled.Close,
-                    contentDescription = "Quitar $emptyLabel",
-                    modifier = Modifier.size(20.dp).clip(CircleShape).clickable(onClick = onRemove),
-                )
-            },
             modifier = Modifier.heightIn(min = 40.dp),
         )
     }

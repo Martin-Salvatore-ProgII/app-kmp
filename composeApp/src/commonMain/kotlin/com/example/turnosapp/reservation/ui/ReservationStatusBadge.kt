@@ -1,4 +1,4 @@
-package com.example.turnosapp.myreservations.ui
+package com.example.turnosapp.reservation.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,9 +26,12 @@ fun ReservationStatus.label(): String =
         ReservationStatus.FAILED, ReservationStatus.INVALID -> "No se completó"
     }
 
-/** La etiqueta del estado, con el color del tema según cómo está la reserva. */
+/**
+ * La etiqueta del estado, con el color del tema según cómo está la reserva. La usan Mis reservas y
+ * la sección de administración, que muestra el estado exacto con su propio texto (ADR-0082).
+ */
 @Composable
-fun ReservationStatusBadge(status: ReservationStatus, modifier: Modifier = Modifier) {
+fun ReservationStatusBadge(status: ReservationStatus, modifier: Modifier = Modifier, text: String = status.label()) {
     val colors = MaterialTheme.colorScheme
     val (container, content) = when {
         status == ReservationStatus.CONFIRMED -> colors.secondaryContainer to colors.onSecondaryContainer
@@ -37,6 +40,6 @@ fun ReservationStatusBadge(status: ReservationStatus, modifier: Modifier = Modif
         else -> colors.tertiaryContainer to colors.onTertiaryContainer
     }
     Surface(color = container, contentColor = content, shape = RoundedCornerShape(6.dp), modifier = modifier) {
-        Text(status.label(), style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+        Text(text, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
     }
 }

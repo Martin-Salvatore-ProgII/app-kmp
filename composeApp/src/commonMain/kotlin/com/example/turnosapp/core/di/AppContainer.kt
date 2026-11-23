@@ -1,5 +1,9 @@
 package com.example.turnosapp.core.di
 
+import com.example.turnosapp.admin.data.AdminReservationRepository
+import com.example.turnosapp.admin.data.AdminReservationRepositoryImpl
+import com.example.turnosapp.admin.data.mapper.AdminReservationMapper
+import com.example.turnosapp.admin.data.remote.AdminReservationApi
 import com.example.turnosapp.auth.data.AuthRepository
 import com.example.turnosapp.availability.data.AvailabilityRepository
 import com.example.turnosapp.availability.data.AvailabilityRepositoryImpl
@@ -60,4 +64,7 @@ class AppContainer(
 
     val reservationRepository: ReservationRepository =
         ReservationRepositoryImpl(ReservationApi(httpClient, urls), ReservationMapper())
+
+    val adminReservationRepository: AdminReservationRepository =
+        AdminReservationRepositoryImpl(AdminReservationApi(httpClient, urls), AdminReservationMapper(ReservationMapper()))
 }

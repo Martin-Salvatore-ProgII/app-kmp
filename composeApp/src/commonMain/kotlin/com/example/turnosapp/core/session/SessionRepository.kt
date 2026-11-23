@@ -14,6 +14,12 @@ interface SessionRepository {
      */
     val isLoggedIn: StateFlow<Boolean>
 
+    /**
+     * Si el JWT de la sesión tiene `ROLE_ADMIN`. La navegación lo observa para mostrar la sección de
+     * administración; es solo interfaz, la autorización la hace turnos (ADR-0037, ADR-0082).
+     */
+    val isAdmin: StateFlow<Boolean>
+
     /** El JWT de la sesión actual, o null si no hay sesión. */
     fun currentToken(): String?
 

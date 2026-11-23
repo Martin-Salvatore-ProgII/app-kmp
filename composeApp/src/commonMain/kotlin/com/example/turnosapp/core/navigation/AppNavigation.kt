@@ -23,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.turnosapp.admin.ui.AdminRoute
 import com.example.turnosapp.availability.ui.AvailabilityRoute
@@ -51,8 +52,6 @@ import kotlinx.datetime.LocalDate
 @Composable
 fun AppNavigation(
     container: AppContainer,
-    // Desde la M7 sale del rol del JWT. Por ahora la sección de administración no se muestra.
-    isAdmin: Boolean = false,
     sessionViewModel: SessionViewModel = viewModel { SessionViewModel(container.sessionRepository) },
 ) {
     val navController = rememberNavController()
@@ -64,6 +63,8 @@ fun AppNavigation(
             }
         }
     }
+    // La pestaña Admin sale del rol del JWT (ADR-0082). Es solo interfaz: turnos autoriza cada operación.
+    val isAdmin by sessionViewModel.isAdmin.collectAsStateWithLifecycle()
     val currentDestination = navController.currentBackStackEntryAsState().value?.destination
     val tabs = TopLevelDestination.entries.filter { !it.adminOnly || isAdmin }
     val showBottomBar = tabs.any { currentDestination.isOn(it) }
@@ -202,7 +203,7 @@ fun AppNavigation(
                     },
                 )
             }
-            composable<Admin> { AdminRoute() }
+            composable<Admin> { AdminRoute(container = container) }
         }
     }
 }

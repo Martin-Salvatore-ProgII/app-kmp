@@ -1,13 +1,15 @@
 package com.example.turnosapp.core.navigation
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.turnosapp.admin.ui.AdminRoute
+import com.example.turnosapp.availability.ui.AvailabilityRoute
 import com.example.turnosapp.auth.ui.LoginRoute
 import com.example.turnosapp.auth.ui.RegisterRoute
 import com.example.turnosapp.auth.ui.SessionAction
@@ -30,7 +33,11 @@ import com.example.turnosapp.auth.ui.SessionEffect
 import com.example.turnosapp.auth.ui.SessionViewModel
 import com.example.turnosapp.core.di.AppContainer
 import com.example.turnosapp.myreservations.ui.MyReservationsRoute
+import com.example.turnosapp.myreservations.ui.ReservationDetailRoute
+import com.example.turnosapp.professional.ui.ProfessionalRoute
+import com.example.turnosapp.reservation.ui.ReservationRoute
 import com.example.turnosapp.search.ui.SearchRoute
+import kotlinx.datetime.LocalDate
 
 /**
  * El mapa de navegación de la app (`docs/arq/interfaz.md`): qué pantallas hay, cómo se llega
@@ -67,8 +74,9 @@ fun AppNavigation(
                 TopAppBar(
                     title = { Text(tabs.firstOrNull { currentDestination.isOn(it) }?.label.orEmpty()) },
                     actions = {
-                        TextButton(onClick = { sessionViewModel.onAction(SessionAction.Logout) }) {
-                            Text("Cerrar sesión")
+                        // Un ícono y no un texto: es una acción poco frecuente y la barra queda más limpia (#43).
+                        IconButton(onClick = { sessionViewModel.onAction(SessionAction.Logout) }) {
+                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Cerrar sesión")
                         }
                     },
                 )
@@ -121,8 +129,79 @@ fun AppNavigation(
                     onBack = { navController.popBackStack() },
                 )
             }
-            composable<Search> { SearchRoute() }
-            composable<MyReservations> { MyReservationsRoute() }
+            composable<Search> {
+                SearchRoute(
+                    container = container,
+                    onProfessionalClick = { id, date -> navController.navigate(Professional(id, date?.toString())) },
+                    onActiveReservationClick = { id -> navController.navigate(Reservation(id)) },
+                )
+            }
+            composable<Professional> { backStackEntry ->
+                val route = backStackEntry.toRoute<Professional>()
+                ProfessionalRoute(
+                    container = container,
+                    professionalId = route.professionalId,
+                    searchedDate = route.date?.let(LocalDate::parse),
+                    onDayChosen = { id, date -> navController.navigate(Availability(id, date.toString())) },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable<Availability> { backStackEntry ->
+                val route = backStackEntry.toRoute<Availability>()
+                AvailabilityRoute(
+                    container = container,
+                    professionalId = route.professionalId,
+                    date = LocalDate.parse(route.date),
+                    onBack = { navController.popBackStack() },
+                    onReservationStarted = { id ->
+                        // Turnos disponibles sale de la pila: su lista ya no está al día (ADR-0080).
+                        // Atrás desde la reserva vuelve a Profesional.
+                        navController.navigate(Reservation(id)) {
+                            popUpTo<Availability> { inclusive = true }
+                        }
+                    },
+                )
+            }
+            composable<Reservation> { backStackEntry ->
+                ReservationRoute(
+                    container = container,
+                    reservationId = backStackEntry.toRoute<Reservation>().reservationId,
+                    onBack = { navController.popBackStack() },
+                    // Primero se descarta lo apilado sobre Buscar (Profesional y la reserva terminada), así
+                    // la barra inferior no lo guarda ni lo vuelve a mostrar al tocar Buscar.
+                    onMyReservations = {
+                        navController.popBackStack<Search>(inclusive = false)
+                        navController.navigateToTab(TopLevelDestination.MY_RESERVATIONS)
+                    },
+                    onSearch = { navController.popBackStack<Search>(inclusive = false) },
+                    onChooseAnotherSlot = { id, date ->
+                        // La reserva terminada sale de la pila: Atrás desde los turnos vuelve a Profesional.
+                        navController.navigate(Availability(id, date.toString())) {
+                            popUpTo<Reservation> { inclusive = true }
+                        }
+                    },
+                )
+            }
+            composable<MyReservations> {
+                MyReservationsRoute(
+                    container = container,
+                    onReservationClick = { id -> navController.navigate(Reservation(id)) },
+                    onDetailClick = { id -> navController.navigate(ReservationDetail(id)) },
+                    onSearchClick = { navController.navigateToTab(TopLevelDestination.SEARCH) },
+                )
+            }
+            composable<ReservationDetail> { backStackEntry ->
+                ReservationDetailRoute(
+                    container = container,
+                    reservationId = backStackEntry.toRoute<ReservationDetail>().reservationId,
+                    onBack = { navController.popBackStack() },
+                    onSearch = {
+                        // Primero sale el Detalle, así Mis reservas no lo guarda y no reaparece al volver a esa sección.
+                        navController.popBackStack<MyReservations>(inclusive = false)
+                        navController.navigateToTab(TopLevelDestination.SEARCH)
+                    },
+                )
+            }
             composable<Admin> { AdminRoute() }
         }
     }

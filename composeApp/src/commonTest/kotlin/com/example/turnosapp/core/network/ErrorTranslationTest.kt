@@ -8,6 +8,12 @@ import kotlin.test.assertEquals
 class ErrorTranslationTest {
 
     @Test
+    fun `503 CATALOG_NOT_READY es el único 503 que se distingue`() {
+        assertEquals(AppError.CatalogNotReady, toAppError(503, ProblemDto(code = "CATALOG_NOT_READY")))
+        assertEquals(AppError.Unavailable, toAppError(503, ProblemDto(code = "CATALOG_UNAVAILABLE")))
+    }
+
+    @Test
     fun `401 es Unauthorized, traiga o no cuerpo`() {
         assertEquals(AppError.Unauthorized, toAppError(401, null))
         assertEquals(AppError.Unauthorized, toAppError(401, ProblemDto(code = "CUALQUIERA")))
@@ -50,7 +56,7 @@ class ErrorTranslationTest {
 
     @Test
     fun `503 es Unavailable, con o sin code`() {
-        assertEquals(AppError.Unavailable, toAppError(503, ProblemDto(code = "CATALOG_NOT_READY")))
+        assertEquals(AppError.Unavailable, toAppError(503, ProblemDto(code = "INTEGRATION_UNAVAILABLE")))
         assertEquals(AppError.Unavailable, toAppError(503, null))
     }
 

@@ -36,9 +36,12 @@ class LoginViewModel(
 
     fun onAction(action: LoginAction) {
         when (action) {
-            is LoginAction.UsernameChanged -> _state.update { it.copy(username = action.value, errorMessage = null) }
-            is LoginAction.PasswordChanged -> _state.update { it.copy(password = action.value, errorMessage = null) }
+            is LoginAction.UsernameChanged ->
+                _state.update { it.copy(username = action.value, errorMessage = null, invalidCredentials = false) }
+            is LoginAction.PasswordChanged ->
+                _state.update { it.copy(password = action.value, errorMessage = null, invalidCredentials = false) }
             is LoginAction.RememberMeChanged -> _state.update { it.copy(rememberMe = action.value) }
+            LoginAction.PasswordVisibilityToggled -> _state.update { it.copy(passwordVisible = !it.passwordVisible) }
             LoginAction.Submit -> login()
             LoginAction.RegisterClicked -> viewModelScope.launch { _effects.send(LoginEffect.NavigateToRegister) }
         }
@@ -60,7 +63,13 @@ class LoginViewModel(
                     _effects.send(LoginEffect.LoggedIn)
                 }
                 .onFailure { error ->
-                    _state.update { it.copy(isLoading = false, errorMessage = loginErrorMessage(error)) }
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = loginErrorMessage(error),
+                            invalidCredentials = error == AppError.Unauthorized,
+                        )
+                    }
                 }
         }
     }
